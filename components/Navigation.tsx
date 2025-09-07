@@ -8,61 +8,64 @@ export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <nav className="relative z-50 px-6 py-4">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <header className="flex justify-center pt-6 pb-0 relative z-50">
+      <div className="flex items-center gap-6">
         {/* Logo */}
         <div className="flex items-center">
           <Image
             src="/images/nav/Streamsift_logo.svg"
             alt="StreamSift"
-            width={150}
-            height={40}
-            className="h-10 w-auto"
+            width={140}
+            height={35}
+            className="h-9 w-auto"
           />
         </div>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center">
-          {/* Navigation Pills Container */}
-          <div className="flex items-center space-x-6 bg-gray-800/50 backdrop-blur-lg rounded-full px-8 py-3 border border-gray-700/50">
+        {/* Navigation Container with gradient border */}
+        <nav className="hidden lg:flex items-center bg-gray-900/60 backdrop-blur-lg rounded-full p-1 border-2 border-transparent bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-400 bg-clip-border relative">
+          <div className="flex items-center bg-gray-900/80 rounded-full px-6 py-3 gap-8">
             <a
               href="#"
-              className="text-white hover:text-purple-400 transition-colors font-medium"
+              className="text-purple-400 font-semibold text-base hover:text-white transition-colors"
             >
               Home
             </a>
             <a
               href="#"
-              className="text-white hover:text-purple-400 transition-colors font-medium"
+              className="text-gray-300 font-semibold text-base hover:text-white transition-colors"
             >
               About
             </a>
             <a
               href="#"
-              className="text-white hover:text-purple-400 transition-colors font-medium"
+              className="text-gray-300 font-semibold text-base hover:text-white transition-colors"
             >
               Log In
             </a>
-            <button className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-2 rounded-full text-white font-semibold hover:opacity-90 transition-opacity">
-              Sign Up
-            </button>
-          </div>
-
-          {/* Analyze My Stream Button */}
-          <div className="ml-6">
             <Image
-              src="/images/nav/Analyze-btn.png"
-              alt="Analyze My Stream"
-              width={180}
-              height={50}
-              className="h-12 w-auto cursor-pointer hover:opacity-90 transition-opacity"
+              src="/images/nav/signup-btn.png"
+              alt="Sign Up"
+              width={100}
+              height={35}
+              className="cursor-pointer hover:opacity-90 transition-opacity"
             />
           </div>
+        </nav>
+
+        {/* Analyze My Stream Button */}
+        <div className="hidden lg:block">
+          <Image
+            src="/images/nav/Analyze-btn.png"
+            alt="Analyze My Stream"
+            width={180}
+            height={45}
+            className="cursor-pointer hover:opacity-90 transition-opacity"
+          />
         </div>
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden text-white"
+          className="lg:hidden text-white"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -71,27 +74,27 @@ export default function Navigation() {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-gray-800/95 backdrop-blur-lg border-t border-gray-700/50 rounded-b-2xl">
-          <div className="px-6 py-4 space-y-4">
+        <div className="lg:hidden absolute top-full left-0 right-0 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-3xl mx-6 mt-4">
+          <div className="px-6 py-6 space-y-4">
             <a
               href="#"
-              className="block text-white hover:text-purple-400 transition-colors font-medium"
+              className="block text-purple-400 px-4 py-3 rounded-full font-semibold text-center"
             >
               Home
             </a>
             <a
               href="#"
-              className="block text-white hover:text-purple-400 transition-colors font-medium"
+              className="block text-gray-300 px-4 py-3 rounded-full font-semibold text-center hover:text-white transition-colors"
             >
               About
             </a>
             <a
               href="#"
-              className="block text-white hover:text-purple-400 transition-colors font-medium"
+              className="block text-gray-300 px-4 py-3 rounded-full font-semibold text-center hover:text-white transition-colors"
             >
               Log In
             </a>
-            <button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-2 rounded-full text-white font-semibold hover:opacity-90 transition-opacity mb-4">
+            <button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-3 rounded-full font-semibold hover:opacity-90 transition-opacity">
               Sign Up
             </button>
             <div className="flex justify-center">
@@ -99,13 +102,13 @@ export default function Navigation() {
                 src="/images/nav/Analyze-btn.png"
                 alt="Analyze My Stream"
                 width={160}
-                height={45}
-                className="h-11 w-auto cursor-pointer hover:opacity-90 transition-opacity"
+                height={40}
+                className="cursor-pointer hover:opacity-90 transition-opacity"
               />
             </div>
           </div>
         </div>
       )}
-    </nav>
+    </header>
   );
 }

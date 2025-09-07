@@ -1,15 +1,15 @@
 import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
 import Features from "@/components/Features";
-import FloatingIcons from "@/components/FloatingIcons";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   return (
-    <main className="relative">
+    <main className="relative bg-black min-h-screen">
       <Navigation />
       <Hero />
       <Features />
-      <FloatingIcons />
+      <Footer />
     </main>
   );
 }
