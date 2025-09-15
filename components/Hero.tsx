@@ -7,8 +7,30 @@ export default function Hero() {
   return (
     <section className="relative min-h-screen bg-black overflow-hidden">
       {/* Earth positioned as curved horizon at bottom like in reference */}
+      {/* Mobile version */}
       <div
-        className="absolute left-1/2 transform -translate-x-1/2 z-0"
+        className="absolute left-1/2 transform -translate-x-1/2 z-0 sm:hidden"
+        style={{ bottom: "5%", width: "200%" }}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.2, delay: 0.8 }}
+        >
+          <Image
+            src="/images/hero/Earth.png"
+            alt="Earth"
+            width={2500}
+            height={1250}
+            className="w-full object-contain"
+            priority
+          />
+        </motion.div>
+      </div>
+
+      {/* Desktop version */}
+      <div
+        className="absolute left-1/2 transform -translate-x-1/2 z-0 hidden sm:block"
         style={{ bottom: "-20%", width: "150%" }}
       >
         <motion.div
