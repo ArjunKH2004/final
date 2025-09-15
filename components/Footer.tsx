@@ -16,7 +16,7 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="relative py-20 px-6 bg-gradient-to-b from-black via-blue-900/20 to-blue-900/40">
+    <footer className="relative py-12 sm:py-20 px-4 sm:px-6 bg-gradient-to-b from-black via-blue-900/20 to-blue-900/40">
       <div className="max-w-4xl mx-auto">
         {/* Get Started Container with gradient border */}
         <div className="relative">
@@ -26,22 +26,13 @@ export default function Footer() {
           </div>
 
           {/* Content */}
-          <div className="relative z-10 p-12 text-center">
-            <h2
-              className="text-white mb-8"
-              style={{
-                fontFamily: 'Gilroy, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                fontSize: '2.5rem',
-                fontWeight: '700',
-                lineHeight: 'normal',
-                letterSpacing: '-0.05rem'
-              }}
-            >
+          <div className="relative z-10 p-6 sm:p-12 text-center">
+            <h2 className="text-white mb-8 font-gilroy text-2xl sm:text-3xl md:text-4xl font-bold">
               Get Started
             </h2>
 
             {/* Input and Dropdown Row */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
               {/* Stream URL Input */}
               <div className="flex-1">
                 <input
@@ -49,12 +40,7 @@ export default function Footer() {
                   placeholder="Enter Stream URL"
                   value={streamUrl}
                   onChange={(e) => setStreamUrl(e.target.value)}
-                  className="w-full px-6 py-4 bg-gray-800/60 border border-gray-600/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500/50 focus:bg-gray-800/80 transition-all"
-                  style={{
-                    fontFamily: 'Gilroy, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '1rem',
-                    fontWeight: '500'
-                  }}
+                  className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-gray-800/60 border border-gray-600/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500/50 focus:bg-gray-800/80 transition-all font-gilroy text-sm sm:text-base"
                 />
               </div>
 
@@ -62,12 +48,7 @@ export default function Footer() {
               <div className="relative">
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center px-6 py-4 bg-gray-800/60 border border-gray-600/30 rounded-xl text-gray-400 hover:bg-gray-800/80 focus:outline-none focus:border-purple-500/50 transition-all min-w-[200px]"
-                  style={{
-                    fontFamily: 'Gilroy, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    fontSize: '1rem',
-                    fontWeight: '500'
-                  }}
+                  className="flex items-center justify-center w-full sm:min-w-[200px] px-4 sm:px-6 py-3 sm:py-4 bg-gray-800/60 border border-gray-600/30 rounded-xl text-gray-400 hover:bg-gray-800/80 focus:outline-none focus:border-purple-500/50 transition-all font-gilroy text-sm sm:text-base"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -112,12 +93,7 @@ export default function Footer() {
                           setSelectedPlatform(platform);
                           setIsDropdownOpen(false);
                         }}
-                        className="w-full px-6 py-3 text-left text-white hover:bg-gray-700/50 transition-colors"
-                        style={{
-                          fontFamily: 'Gilroy, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                          fontSize: '1rem',
-                          fontWeight: '500'
-                        }}
+                        className="w-full px-4 sm:px-6 py-3 text-left text-white hover:bg-gray-700/50 transition-colors font-gilroy text-sm sm:text-base"
                       >
                         {platform}
                       </button>
@@ -128,17 +104,7 @@ export default function Footer() {
             </div>
 
             {/* Analyze Button */}
-            <button
-              className="w-full py-4 px-8 text-white font-bold text-lg hover:opacity-90 transition-opacity shadow-lg"
-              style={{
-                borderRadius: '0.25rem',
-                background: 'var(--Key-Brand-Color, linear-gradient(225deg, #1ACFFE 16.93%, #7629FE 57.3%, #5F28FF 86.7%))',
-                fontFamily: 'Gilroy, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                fontSize: '1.125rem',
-                fontWeight: '700',
-                letterSpacing: '-0.025rem'
-              }}
-            >
+            <button className="w-full py-3 sm:py-4 px-6 sm:px-8 text-white font-bold text-base sm:text-lg hover:opacity-90 transition-opacity shadow-lg rounded bg-gradient-to-r from-cyan-400 via-purple-500 to-blue-600 font-gilroy">
               Analyze my Stream
             </button>
           </div>

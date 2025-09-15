@@ -8,8 +8,8 @@ export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="flex justify-center pt-6 pb-0 relative z-50">
-      <div className="flex items-center gap-6">
+    <header className="flex justify-center pt-4 sm:pt-6 pb-0 relative z-50 px-4">
+      <div className="flex items-center gap-3 sm:gap-6 w-full max-w-7xl justify-between lg:justify-center">
         {/* Logo */}
         <div className="flex items-center">
           <Image
@@ -17,7 +17,7 @@ export default function Navigation() {
             alt="StreamSift"
             width={140}
             height={35}
-            className="h-9 w-auto"
+            className="h-7 sm:h-9 w-auto"
           />
         </div>
 
@@ -74,36 +74,36 @@ export default function Navigation() {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 right-0 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-3xl mx-6 mt-4">
-          <div className="px-6 py-6 space-y-4">
+        <div className="lg:hidden absolute top-full left-0 right-0 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-3xl mx-4 mt-4">
+          <div className="px-4 sm:px-6 py-6 space-y-4">
             <a
               href="#"
-              className="block text-purple-400 px-4 py-3 rounded-full font-semibold text-center"
+              className="block text-purple-400 px-4 py-3 rounded-full font-semibold text-center text-sm sm:text-base"
             >
               Home
             </a>
             <a
               href="#"
-              className="block text-gray-300 px-4 py-3 rounded-full font-semibold text-center hover:text-white transition-colors"
+              className="block text-gray-300 px-4 py-3 rounded-full font-semibold text-center hover:text-white transition-colors text-sm sm:text-base"
             >
               About
             </a>
             <a
               href="#"
-              className="block text-gray-300 px-4 py-3 rounded-full font-semibold text-center hover:text-white transition-colors"
+              className="block text-gray-300 px-4 py-3 rounded-full font-semibold text-center hover:text-white transition-colors text-sm sm:text-base"
             >
               Log In
             </a>
-            <button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-3 rounded-full font-semibold hover:opacity-90 transition-opacity">
+            <button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-3 rounded-full font-semibold hover:opacity-90 transition-opacity text-sm sm:text-base">
               Sign Up
             </button>
-            <div className="flex justify-center">
+            <div className="flex justify-center pt-2">
               <Image
                 src="/images/nav/Analyze-btn.png"
                 alt="Analyze My Stream"
                 width={160}
                 height={40}
-                className="cursor-pointer hover:opacity-90 transition-opacity"
+                className="cursor-pointer hover:opacity-90 transition-opacity w-36 sm:w-40 h-auto"
               />
             </div>
           </div>

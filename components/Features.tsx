@@ -27,27 +27,27 @@ export default function Features() {
       <div className="max-w-7xl mx-auto">
         {/* Introduction */}
         <motion.div
-          className="text-center mb-20"
+          className="text-center mb-20 px-4"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <h2 className="font-gilroy text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-8">
+          <h2 className="font-gilroy text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-8">
             Introducing{" "}
             <span className="bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-400 bg-clip-text text-transparent">
               StreamSift
             </span>
           </h2>
-          <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed font-medium">
+          <p className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed font-medium px-4">
             StreamSift is your all-in-one, real-time audience intelligence tool
             for streamers and content creators.
           </p>
-          <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed mt-6 font-medium">
+          <p className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed mt-6 font-medium px-4">
             It breaks down the "what just happened?" moments during your streams
             – and turns them into "here's exactly why!"
           </p>
-          <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed mt-6 font-medium">
+          <p className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed mt-6 font-medium px-4">
             Whether you're on Twitch, YouTube, or Instagram Live, StreamSift
             pulls in data from all your platforms to give you instant,
             AI-powered insights on what your audience loves, skips, or drops off
@@ -76,21 +76,12 @@ export default function Features() {
 
           {/* Content */}
           <div className="relative z-10 py-20">
-            <h3
-              className="text-white mb-16"
-              style={{
-                fontFamily: 'Gilroy, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                fontSize: '3rem',
-                fontWeight: '700',
-                lineHeight: 'normal',
-                letterSpacing: '-0.05rem'
-              }}
-            >
+            <h3 className="text-white mb-16 font-gilroy text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold px-4">
               Why StreamSift?
             </h3>
 
             {/* Features Grid */}
-            <div className="grid md:grid-cols-3 gap-16 max-w-6xl mx-auto px-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-16 max-w-6xl mx-auto px-4 sm:px-8">
               {features.map((feature, index) => (
                 <motion.div
                   key={feature.title}
@@ -114,26 +105,10 @@ export default function Features() {
                   </div>
 
                   {/* Content */}
-                  <h4
-                    className="text-white mb-6"
-                    style={{
-                      fontFamily: 'Gilroy, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                      fontSize: '1.5rem',
-                      fontWeight: '600',
-                      lineHeight: 'normal'
-                    }}
-                  >
+                  <h4 className="text-white mb-6 font-gilroy text-xl sm:text-2xl font-semibold">
                     {feature.title}
                   </h4>
-                  <p
-                    className="text-gray-300 max-w-xs mx-auto"
-                    style={{
-                      fontFamily: 'Gilroy, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                      fontSize: '1rem',
-                      fontWeight: '400',
-                      lineHeight: '1.5'
-                    }}
-                  >
+                  <p className="text-gray-300 max-w-xs mx-auto font-gilroy text-sm sm:text-base leading-relaxed">
                     {feature.description}
                   </p>
                 </motion.div>
