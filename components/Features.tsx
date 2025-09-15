@@ -27,32 +27,52 @@ export default function Features() {
       <div className="max-w-7xl mx-auto">
         {/* Introduction */}
         <motion.div
-          className="text-center mb-20 px-4"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20 px-4"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <h2 className="font-gilroy text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-8">
-            Introducing{" "}
-            <span className="bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-400 bg-clip-text text-transparent">
-              StreamSift
-            </span>
-          </h2>
-          <p className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed font-medium px-4">
-            StreamSift is your all-in-one, real-time audience intelligence tool
-            for streamers and content creators.
-          </p>
-          <p className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed mt-6 font-medium px-4">
-            It breaks down the "what just happened?" moments during your streams
-            – and turns them into "here's exactly why!"
-          </p>
-          <p className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed mt-6 font-medium px-4">
-            Whether you're on Twitch, YouTube, or Instagram Live, StreamSift
-            pulls in data from all your platforms to give you instant,
-            AI-powered insights on what your audience loves, skips, or drops off
-            from – so you can stream smarter, not harder.
-          </p>
+          {/* Left side - Text content */}
+          <div className="text-left">
+            <h2 className="font-gilroy text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-8">
+              Introducing{" "}
+              <span className="bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-400 bg-clip-text text-transparent">
+                StreamSift
+              </span>
+            </h2>
+            <p className="text-lg sm:text-xl md:text-2xl text-gray-300 leading-relaxed font-medium mb-6">
+              StreamSift is your all-in-one, real-time audience intelligence
+              tool for streamers and content creators.
+            </p>
+            <p className="text-lg sm:text-xl md:text-2xl text-gray-300 leading-relaxed font-medium mb-6">
+              It breaks down the "what just happened?" moments during your
+              streams – and turns them into "here's exactly why!"
+            </p>
+            <p className="text-lg sm:text-xl md:text-2xl text-gray-300 leading-relaxed font-medium">
+              Whether you're on Twitch, YouTube, or Instagram Live, StreamSift
+              pulls in data from all your platforms to give you instant,
+              AI-powered insights on what your audience loves, skips, or drops
+              off from – so you can stream smarter, not harder.
+            </p>
+          </div>
+
+          {/* Right side - Logo image */}
+          <motion.div
+            className="flex justify-center lg:justify-end"
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            viewport={{ once: true }}
+          >
+            <Image
+              src="/images/why/logo.png"
+              alt="StreamSift Logo"
+              width={300}
+              height={300}
+              className="object-contain w-48 sm:w-56 md:w-64 lg:w-72 max-w-xs"
+            />
+          </motion.div>
         </motion.div>
 
         {/* Why StreamSift Section */}
