@@ -64,13 +64,16 @@ export default function Features() {
           viewport={{ once: true }}
         >
           {/* Background Image */}
-          <div className="absolute inset-0 z-0">
+          <div className="absolute left-1/2 top-0 transform -translate-x-1/2 z-0 w-screen h-full overflow-hidden">
             <Image
               src="/images/why/background.png"
               alt="Why StreamSift Background"
               fill
-              className="object-cover opacity-80"
+              className="object-cover opacity-40"
               priority
+              style={{
+                filter: "brightness(0.3) contrast(1.2)",
+              }}
             />
           </div>
 
@@ -116,8 +119,6 @@ export default function Features() {
             </div>
           </div>
         </motion.div>
-
-
       </div>
     </section>
   );
