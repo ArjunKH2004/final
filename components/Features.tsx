@@ -46,8 +46,8 @@ export default function Features() {
               tool for streamers and content creators.
             </p>
             <p className="text-lg sm:text-xl md:text-2xl text-gray-300 leading-relaxed font-medium mb-6">
-              It breaks down the "what just happened?" moments during your
-              streams – and turns them into "here's exactly why!"
+              It breaks down the &quot;what just happened?&quot; moments during your
+              streams – and turns them into &quot;here&apos;s exactly why!&quot;
             </p>
             <p className="text-lg sm:text-xl md:text-2xl text-gray-300 leading-relaxed font-medium">
               Whether you're on Twitch, YouTube, or Instagram Live, StreamSift
