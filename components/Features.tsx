@@ -50,7 +50,7 @@ export default function Features() {
               streams – and turns them into &quot;here&apos;s exactly why!&quot;
             </p>
             <p className="text-lg sm:text-xl md:text-2xl text-gray-300 leading-relaxed font-medium">
-              Whether you're on Twitch, YouTube, or Instagram Live, StreamSift
+              Whether you&apos;re on Twitch, YouTube, or Instagram Live, StreamSift
               pulls in data from all your platforms to give you instant,
               AI-powered insights on what your audience loves, skips, or drops
               off from – so you can stream smarter, not harder.
