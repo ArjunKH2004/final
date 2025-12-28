@@ -3,33 +3,34 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <header className="flex justify-center pt-4 sm:pt-6 pb-0 relative z-50 px-4">
-      <div className="flex items-center gap-3 sm:gap-6 w-full max-w-7xl justify-between lg:justify-center">
+      <div className="flex items-center w-full max-w-7xl justify-between">
         {/* Logo */}
-        <div className="flex items-center">
+        <Link href="/" className="flex items-center">
           <Image
             src="/images/nav/Streamsift_logo.svg"
             alt="StreamSift"
             width={140}
             height={35}
-            className="h-7 sm:h-9 w-auto"
+            className="h-7 sm:h-9 w-auto cursor-pointer"
           />
-        </div>
+        </Link>
 
         {/* Navigation Container with gradient border */}
         <nav className="hidden lg:flex items-center bg-gray-900/60 backdrop-blur-lg rounded-full p-1 border-2 border-transparent bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-400 bg-clip-border relative">
           <div className="flex items-center bg-gray-900/80 rounded-full px-6 py-3 gap-8">
-            <a
-              href="#"
+            <Link
+              href="/"
               className="text-purple-400 font-semibold text-base hover:text-white transition-colors"
             >
               Home
-            </a>
+            </Link>
             <a
               href="#"
               className="text-gray-300 font-semibold text-base hover:text-white transition-colors"
@@ -53,7 +54,7 @@ export default function Navigation() {
         </nav>
 
         {/* Analyze My Stream Button */}
-        <div className="hidden lg:block">
+        <Link href="/analyze" className="hidden lg:block">
           <Image
             src="/images/nav/Analyze-btn.png"
             alt="Analyze My Stream"
@@ -61,7 +62,7 @@ export default function Navigation() {
             height={45}
             className="cursor-pointer hover:opacity-90 transition-opacity"
           />
-        </div>
+        </Link>
 
         {/* Mobile Menu Button */}
         <button
@@ -76,12 +77,12 @@ export default function Navigation() {
       {isMenuOpen && (
         <div className="lg:hidden absolute top-full left-0 right-0 bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-3xl mx-4 mt-4">
           <div className="px-4 sm:px-6 py-6 space-y-4">
-            <a
-              href="#"
+            <Link
+              href="/"
               className="block text-purple-400 px-4 py-3 rounded-full font-semibold text-center text-sm sm:text-base"
             >
               Home
-            </a>
+            </Link>
             <a
               href="#"
               className="block text-gray-300 px-4 py-3 rounded-full font-semibold text-center hover:text-white transition-colors text-sm sm:text-base"
@@ -97,7 +98,7 @@ export default function Navigation() {
             <button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-3 rounded-full font-semibold hover:opacity-90 transition-opacity text-sm sm:text-base">
               Sign Up
             </button>
-            <div className="flex justify-center pt-2">
+            <Link href="/analyze" className="flex justify-center pt-2">
               <Image
                 src="/images/nav/Analyze-btn.png"
                 alt="Analyze My Stream"
@@ -105,7 +106,7 @@ export default function Navigation() {
                 height={40}
                 className="cursor-pointer hover:opacity-90 transition-opacity w-36 sm:w-40 h-auto"
               />
-            </div>
+            </Link>
           </div>
         </div>
       )}
