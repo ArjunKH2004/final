@@ -26,13 +26,15 @@ COPY backend/yt_ai_classifier_model_2.sav /app/models/yt_ai_classifier_model_2.s
 COPY backend/tokenizer.pkl /app/models/tokenizer.pkl
 COPY backend/ModelV2.keras /app/models/ModelV2.keras
 COPY backend/Tokenizer4/ /app/models/Tokenizer4/
-
-# Copy the tfidf_vectorizer from the build context
 COPY tfidf_vectorizer.sav /app/models/tfidf_vectorizer.sav
 
 # Copy and set entrypoint
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
+
+# Environment variables for model paths
+ENV MODEL_PATH=/app/models/yt_ai_classifier_model_2.sav
+ENV VECTORIZER_PATH=/app/models/tfidf_vectorizer.sav
 
 EXPOSE 5000
 
