@@ -173,17 +173,17 @@ def summarize(counts):
 
 # ===== API KEYS =====
 # YouTube Data API v3
-YOUTUBE_API_KEY = "AIzaSyDHQnizSt0rJgHYRRa6Pe4PybUZpDK62ec"
+YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "AIzaSyDHQnizSt0rJgHYRRa6Pe4PybUZpDK62ec")
 
 # Gemini API Key (free from https://ai.google.dev)
-GEMINI_API_KEY = "AIzaSyDHQnizSt0rJgHYRRa6Pe4PybUZpDK62ec"
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyDHQnizSt0rJgHYRRa6Pe4PybUZpDK62ec")
 genai.configure(api_key=GEMINI_API_KEY)
 
 # Twitch API
-TWITCH_SECRET = "t6ufp4pnzzkisxz5oim5vontvzz40n"
+TWITCH_SECRET = os.environ.get("TWITCH_SECRET", "t6ufp4pnzzkisxz5oim5vontvzz40n")
 
 # Kick API
-KICK_CLIENT_ID = "01KKHHF5BP1WD1N566KH7P5BCS"
+KICK_CLIENT_ID = os.environ.get("KICK_CLIENT_ID", "01KKHHF5BP1WD1N566KH7P5BCS")
 
 # Facebook Gaming API
 # FB_APP_ID = "your_facebook_app_id"
@@ -1146,6 +1146,6 @@ def handle_ws_disconnect():
 
 if __name__ == "__main__":
     import os
-    port = int(os.environ.get("PORT", 10000))
-    print(f"Starting server on port {port}")
-    socketio.run(app, host="0.0.0.0", port=port, debug=False)
+    port = int(os.environ.get("PORT", 5000))
+    print(f"Starting StreamSift backend on port {port} — YouTube + Twitch + Kick")
+    socketio.run(app, host="0.0.0.0", port=port, debug=False, allow_unsafe_werkzeug=True)
