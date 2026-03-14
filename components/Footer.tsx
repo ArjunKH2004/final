@@ -11,8 +11,7 @@ export default function Footer() {
     "Twitch",
     "YouTube",
     "Instagram Live",
-    "TikTok Live",
-    "Facebook Live"
+    "TikTok Live"
   ];
 
   return (
