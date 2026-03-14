@@ -173,7 +173,7 @@ def summarize(counts):
 
 # ===== API KEYS =====
 # YouTube Data API v3
-YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "AIzaSyDHQnizSt0rJgHYRRa6Pe4PybUZpDK62ec")
+YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "AIzaSyDxRbw6HzpDU3xJVrd2JXBWDrhHW8cU2zg")
 
 # Gemini API Key (free from https://ai.google.dev)
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyDHQnizSt0rJgHYRRa6Pe4PybUZpDK62ec")
@@ -191,51 +191,6 @@ def yt(api_key=None):
     """YouTube API client. Uses hardcoded key if none provided."""
     key = api_key or YOUTUBE_API_KEY
     return build("youtube", "v3", developerKey=key)
-
-# ===== TWITCH HELPERS (COMMENTED - TODO) =====
-# import requests
-# 
-# def get_twitch_headers():
-#     """Get headers for Twitch API requests."""
-#     return {
-#         "Client-ID": TWITCH_CLIENT_ID,
-#         "Authorization": f"Bearer {TWITCH_OAUTH_TOKEN}"
-#     }
-# 
-# def get_twitch_user_id(username):
-#     """Get Twitch user ID from username."""
-#     response = requests.get(
-#         f"https://api.twitch.tv/helix/users?login={username}",
-#         headers=get_twitch_headers()
-#     )
-#     data = response.json()
-#     if data.get("data"):
-#         return data["data"][0]["id"]
-#     return None
-# 
-# def get_twitch_stream_info(user_id):
-#     """Get Twitch stream info."""
-#     response = requests.get(
-#         f"https://api.twitch.tv/helix/streams?user_id={user_id}",
-#         headers=get_twitch_headers()
-#     )
-#     return response.json()
-
-# ===== KICK HELPERS (COMMENTED - TODO) =====
-# Note: Kick doesn't have an official public API yet
-# You may need to use web scraping or unofficial methods
-# 
-# def get_kick_stream_info(channel_name):
-#     """Get Kick stream info - requires unofficial API or scraping."""
-#     # response = requests.get(f"https://kick.com/api/v1/channels/{channel_name}")
-#     # return response.json()
-#     pass
-# 
-# def get_kick_chat_messages(channel_name):
-#     """Get Kick chat messages - may require WebSocket connection."""
-#     # Kick uses WebSockets for real-time chat
-#     # You'd need to connect to their WebSocket endpoint
-#     pass
 
 
 # ===== ROUTES =====
