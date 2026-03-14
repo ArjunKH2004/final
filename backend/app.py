@@ -27,7 +27,7 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.environ.get("MODEL_PATH", os.path.join(BASE_DIR, "yt_ai_classifier_model_2.sav"))
-VECTORIZER_PATH = os.environ.get("VECTORIZER_PATH", os.path.join(BASE_DIR, "..", "tfidf_vectorizer.sav"))
+VECTORIZER_PATH = os.environ.get("VECTORIZER_PATH", os.path.join(BASE_DIR, "tfidf_vectorizer.sav"))
 
 # Label mapping: adjust based on your model's output classes
 # Common mappings: 0 = negative/bad, 1 = neutral, 2 = positive/good
