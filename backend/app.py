@@ -185,10 +185,6 @@ TWITCH_SECRET = os.environ.get("TWITCH_SECRET", "t6ufp4pnzzkisxz5oim5vontvzz40n"
 # Kick API
 KICK_CLIENT_ID = os.environ.get("KICK_CLIENT_ID", "01KKHHF5BP1WD1N566KH7P5BCS")
 
-# Facebook Gaming API
-# FB_APP_ID = "your_facebook_app_id"
-# FB_APP_SECRET = "your_facebook_app_secret"
-# FB_ACCESS_TOKEN = "your_facebook_access_token"
 
 # ===== PLATFORM HELPERS =====
 def yt(api_key=None):
@@ -241,28 +237,6 @@ def yt(api_key=None):
 #     # You'd need to connect to their WebSocket endpoint
 #     pass
 
-# ===== FACEBOOK GAMING HELPERS (COMMENTED - TODO) =====
-# def get_fb_live_video(video_id):
-#     """Get Facebook live video info."""
-#     response = requests.get(
-#         f"https://graph.facebook.com/v18.0/{video_id}",
-#         params={
-#             "fields": "title,live_views,comments.limit(100){message,from}",
-#             "access_token": FB_ACCESS_TOKEN
-#         }
-#     )
-#     return response.json()
-# 
-# def get_fb_live_comments(video_id):
-#     """Get Facebook live video comments."""
-#     response = requests.get(
-#         f"https://graph.facebook.com/v18.0/{video_id}/comments",
-#         params={
-#             "fields": "message,from,created_time",
-#             "access_token": FB_ACCESS_TOKEN
-#         }
-#     )
-#     return response.json()
 
 # ===== ROUTES =====
 @app.route("/")
