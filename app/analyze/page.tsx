@@ -11,7 +11,6 @@ const platforms = [
     { id: "twitch", name: "Twitch" },
     { id: "youtube", name: "YouTube" },
     { id: "kick", name: "Kick" },
-    { id: "facebook", name: "Facebook Gaming" },
 ];
 
 export default function AnalyzePage() {
