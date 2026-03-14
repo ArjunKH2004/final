@@ -22,7 +22,7 @@
 - **AI-Powered Sentiment Classification** – Uses a trained scikit-learn ML model with TF-IDF vectorization
 - **Live Stream Embed** – Watch your stream directly in the dashboard while analyzing chat
 - **Sentiment Breakdown Dashboard** – Visual breakdown of positive, neutral, and negative sentiment percentages
-- **Multi-Platform Ready** – Architecture designed to support YouTube, Twitch, Kick, and Facebook Gaming (YouTube currently active)
+- **Multi-Platform Ready** – Architecture designed to support YouTube, Twitch, and Kick (YouTube currently active)
 
 ---
 
@@ -216,7 +216,7 @@ echo "YOUTUBE_API_KEY=your_api_key_here" > backend/.env
 - [x] Real-time sentiment dashboard
 - [ ] Twitch integration
 - [ ] Kick integration
-- [ ] Facebook Gaming integration
+
 - [ ] Historical analytics & trends
 - [ ] Custom ML model training interface
 
