@@ -1,11 +1,10 @@
 flask
-flask-cors
-flask-socketio
 google-api-python-client
 textblob
 pandas
-numpy
 nltk
+flask-cors
+flask-socketio
 scikit-learn
 google-generativeai
 websocket-client
