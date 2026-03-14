@@ -1145,5 +1145,7 @@ def handle_ws_disconnect():
     print("WebSocket client disconnected")
 
 if __name__ == "__main__":
-    print("StreamSift Backend — YouTube + Twitch + Kick")
-    socketio.run(app, host="0.0.0.0", port=5000, debug=False, allow_unsafe_werkzeug=True)
+    import os
+    port = int(os.environ.get("PORT", 10000))
+    print(f"Starting server on port {port}")
+    socketio.run(app, host="0.0.0.0", port=port, debug=False)
