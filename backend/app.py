@@ -173,7 +173,7 @@ def summarize(counts):
 
 # ===== API KEYS =====
 # YouTube Data API v3
-YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "AIzaSyDxRbw6HzpDU3xJVrd2JXBWDrhHW8cU2zg")
+YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "AIzaSyC2d0I90Lh4A7GvL4hK8H3Yk6M0JtZ4c6Y")
 
 # Gemini API Key (free from https://ai.google.dev)
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyDHQnizSt0rJgHYRRa6Pe4PybUZpDK62ec")
