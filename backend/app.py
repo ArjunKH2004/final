@@ -1,10 +1,8 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
-import os
-import torch
-from transformers import BertTokenizer, BertForSequenceClassification
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from googleapiclient.discovery import build
+from textblob import TextBlob
 import re
 import json
 import numpy as np
@@ -21,180 +19,93 @@ from collections import deque, Counter
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+
+# ===== SKLEARN MODEL SETUP =====
+# Using saved scikit-learn classifier and TF-IDF vectorizer
+
+import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.environ.get("MODEL_PATH", os.path.join(BASE_DIR, "yt_ai_classifier_model_2.sav"))
+VECTORIZER_PATH = os.environ.get("VECTORIZER_PATH", os.path.join(BASE_DIR, "tfidf_vectorizer.sav"))
 
-# ===== ADVANCED AI MODEL SETUP =====
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "TransModelSimpRoberta2")
-TOKENIZER_PATH = os.path.join(BASE_DIR, "Tokenizer5")
+# Label mapping: adjust based on your model's output classes
+# Common mappings: 0 = negative/bad, 1 = neutral, 2 = positive/good
+id2label = {0: "bad", 1: "neutral", 2: "good"}
 
-# Cloud-Safe Mode: Skip heavy models on Render or if files missing
-IS_RENDER = os.environ.get("RENDER") is not None
-SKIP_HEAVY_MODELS = IS_RENDER or not os.path.exists(MODEL_PATH)
-
-bert_model = None
-flan_model = None
-
-if SKIP_HEAVY_MODELS:
-    print(f"🚀 CLOUD-SAFE MODE: {'Render detected' if IS_RENDER else 'Models missing'}. Skipping heavy AI loads.")
-else:
-    try:
-        print(f"Loading BERT sentiment model from: {MODEL_PATH}")
-        bert_tokenizer = BertTokenizer.from_pretrained(TOKENIZER_PATH)
-        bert_model = BertForSequenceClassification.from_pretrained(MODEL_PATH)
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        bert_model.to(device)
-        bert_model.eval()
-        print(f"✅ BERT model loaded on {device}!")
-    except Exception as e:
-        print(f"Error loading BERT model: {e}")
-        bert_model = None
-
-    try:
-        print("Loading FLAN-T5 for insights...")
-        flan_tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-small")
-        flan_model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-small")
-        print("✅ FLAN-T5 loaded!")
-    except Exception as e:
-        print(f"Error loading FLAN-T5: {e}")
-        flan_model = None
-
-LABEL_MAP = {0: "bad", 1: "neutral", 2: "good"}
-CONTEXT_SEP = " [CTX] "
-TARGET_SEP = " [TGT] "
+# ===== LOAD MODEL =====
+try:
+    print(f"Loading classifier from: {MODEL_PATH}")
+    with open(MODEL_PATH, 'rb') as f:
+        model = pickle.load(f)
+    print(f"Loading vectorizer from: {VECTORIZER_PATH}")
+    with open(VECTORIZER_PATH, 'rb') as f:
+        vectorizer = pickle.load(f)
+    print("Models loaded successfully!")
+except Exception as e:
+    print(f"Error loading models: {e}")
+    model = None
+    vectorizer = None
 
 def preprocess(text):
     """Clean text by removing URLs."""
     return re.sub(r"http\S+", "", str(text))
 
-def classify_sentiment(text, context_msgs=None):
-    """
-    Advanced BERT-based sentiment classification with context, slang, and sarcasm detection.
-    """
-    if not bert_model:
-        # Fallback to simple TextBlob
-        from textblob import TextBlob
-        p = TextBlob(text).sentiment.polarity
-        if p > 0.1: return "good", 0.8
-        if p < -0.1: return "bad", 0.8
-        return "neutral", 0.5
-
+def predict_sentiment(text):
+    """Predict sentiment for a single text using sklearn model."""
+    if not model or not vectorizer:
+        return "neutral", {"bad": 0.33, "neutral": 0.34, "good": 0.33}
+    
+    clean_text = preprocess(text)
+    features = vectorizer.transform([clean_text])
+    pred = model.predict(features)[0]
+    
+    # Try to get probabilities if model supports it
     try:
-        clean = text.strip()
-        if re.match(r'^[!@/]\w*$', clean) or re.match(r'^\d+$', clean) or len(clean) < 2:
-            return "neutral", 0.9
+        probs = model.predict_proba(features)[0]
+        prob_dict = {id2label[i]: float(probs[i]) for i in range(len(probs))}
+    except:
+        prob_dict = {"bad": 0.33, "neutral": 0.34, "good": 0.33}
+        prob_dict[id2label[pred]] = 1.0
+    
+    label = id2label.get(pred, "neutral")
+    return label, prob_dict
 
-        # Slang expansion
-        SLANG = {
-            r'\bpog\b|\bpoggers\b|\bpogchamp\b': 'amazing',
-            r'\bgg\b|\bggwp\b': 'great game',
-            r'\bkekw\b|\blul\b|\blmaooo+\b': 'laughing funny',
-            r'\bcopium\b': 'coping disappointed',
-            r'\bhopium\b': 'hoping optimistic',
-            r'\bsadge\b': 'sad disappointed',
-            r'\bbased\b': 'respectable good',
-            r'\bcringe\b': 'embarrassing bad',
-            r'\bratio\b': 'disagreeing wrong',
-            r'\bw\b(?!\w)': 'win',
-            r'\bl\b(?!\w)': 'loss fail',
-        }
-        expanded = clean.lower()
-        for pat, rep in SLANG.items():
-            expanded = re.sub(pat, rep, expanded)
-
-        # Build context
-        ctx = context_msgs or []
-        ctx_part = "".join(f"{CONTEXT_SEP}{m}" for m in ctx[-2:])
-        enriched = f"{ctx_part}{TARGET_SEP}{expanded}"
-
-        device = next(bert_model.parameters()).device
-        inputs = bert_tokenizer(
-            enriched,
-            return_tensors="pt",
-            padding="max_length",
-            truncation=True,
-            max_length=256
-        ).to(device)
-
-        with torch.no_grad():
-            logits = bert_model(**inputs).logits
-            probs = torch.softmax(logits, dim=-1).squeeze().cpu().numpy()
-            pred_idx = int(probs.argmax())
-            confidence = float(probs[pred_idx])
-
-        sentiment = LABEL_MAP[pred_idx]
-        # Adjust threshold
-        threshold = 0.60 if len(clean.split()) <= 4 else 0.72
-        if confidence < threshold:
-            sentiment = "neutral"
-
-        return sentiment, confidence
-    except Exception as e:
-        print(f"Sentiment analysis error: {e}")
-        return "neutral", 0.5
-
-def predict_batch(texts, context_msgs=None):
-    """Batch prediction using BERT."""
+def predict_batch(texts, batch_size=16):
+    """Predict sentiment for multiple texts in batches."""
+    if not model or not vectorizer:
+        return [("neutral", {"bad": 0.33, "neutral": 0.34, "good": 0.33}) for _ in texts]
+    
     results = []
-    for text in texts:
-        label, conf = classify_sentiment(text, context_msgs)
-        # Compatibility with existing frontend which expects probabilities
-        probs = {"good": 0.0, "bad": 0.0, "neutral": 0.0}
-        probs[label] = conf
-        # Distribute remaining confidence to other labels for UI display
-        remaining = (1.0 - conf) / 2
-        for k in probs:
-            if k != label:
-                probs[k] = remaining
-        results.append((label, probs))
+    clean_texts = [preprocess(t) for t in texts]
+    features = vectorizer.transform(clean_texts)
+    predictions = model.predict(features)
+    
+    # Try to get probabilities
+    try:
+        all_probs = model.predict_proba(features)
+        has_probs = True
+    except:
+        has_probs = False
+    
+    for i, pred in enumerate(predictions):
+        label = id2label.get(pred, "neutral")
+        if has_probs:
+            probs = all_probs[i]
+            prob_dict = {id2label[j]: float(probs[j]) for j in range(len(probs))}
+        else:
+            prob_dict = {"bad": 0.33, "neutral": 0.34, "good": 0.33}
+            prob_dict[label] = 1.0
+        results.append((label, prob_dict))
+    
     return results
 
-def predict_sentiment(text, context_msgs=None):
-    """Single prediction using BERT."""
-    label, conf = classify_sentiment(text, context_msgs)
-    probs = {"good": 0.0, "bad": 0.0, "neutral": 0.0}
-    probs[label] = conf
-    remaining = (1.0 - conf) / 2
-    for k in probs:
-        if k != label:
-            probs[k] = remaining
-    return label, probs
-
-def summarize(counts, messages=None):
-    """Consolidated analytical summary."""
-    g, b, n = counts["good"], counts["bad"], counts["neutral"]
-    total = g + b + n
-    if total == 0: return "Not enough data for a summary yet."
-    
-    pg = (g / total) * 100
-    pb = (b / total) * 100
-    
-    summary_text = ""
-    if pg > 70: summary_text = f"Overwhelmingly positive ({pg:.1f}%)! The audience is loving the content."
-    elif pb > 50: summary_text = f"Vocal negativity detected ({pb:.1f}%). Significant complaints are surfacing."
-    elif pg > pb: summary_text = f"Mainly positive ({pg:.1f}%), indicating strong audience support."
-    # Try to use FLAN-T5 for a deeper insight if messages are provided
-    if messages and len(messages) > 10 and flan_model:
-        m_texts = [m.get('message', m.get('text', '')) for m in messages[-10:]]
-        prompt = f"Summarize the mood of these chat messages: {' '.join(m_texts)}"
-        ai_insight = flan_generate(prompt)
-        if ai_insight:
-            summary_text += f" AI Insight: {ai_insight}"
-            
-    return summary_text
-
-def flan_generate(prompt):
-    """Generate text using FLAN-T5."""
-    if not flan_model or not flan_tokenizer:
-        return None
-    try:
-        inputs = flan_tokenizer(prompt, return_tensors="pt").to(flan_model.device)
-        outputs = flan_model.generate(**inputs, max_new_tokens=50)
-        return flan_tokenizer.decode(outputs[0], skip_special_tokens=True)
-    except Exception as e:
-        print(f"FLAN-T5 generation error: {e}")
-        return None
+def classify_simple(text):
+    """Simple TextBlob-based sentiment for live chat (faster than ML model)."""
+    p = TextBlob(text).sentiment.polarity
+    if p > 0.1: return "good"
+    if p < -0.1: return "bad"
+    return "neutral"
 
 def gemini_batch_classify(texts, context, batch_size=30):
     """Use Gemini AI to classify comments relative to the video context.
@@ -252,7 +163,28 @@ Respond ONLY with a valid JSON array of strings, one per comment, in the same or
     
     return all_results
 
+def summarize(counts):
+    g, b, n = counts["good"], counts["bad"], counts["neutral"]
+    total = g + b + n
+    if total == 0:
+        return "Not enough data for a summary yet."
+        
+    pg = (g / total) * 100
+    pb = (b / total) * 100
+    pn = (n / total) * 100
 
+    if pg > 70:
+        return f"Overwhelmingly positive ({pg:.1f}%)! The audience is loving the content."
+    if pb > 50:
+        return f"Vocal negativity detected ({pb:.1f}%). There are significant complaints or criticisms."
+    if pg > pb and pg > 40:
+        return f"Mainly positive ({pg:.1f}%), with some mixed reactions."
+    if pb > pg and pb > 30:
+        return f"Leaning negative ({pb:.1f}%). Watch out for rising criticism."
+    if pn > 60:
+        return "Mostly neutral or chill. The audience is watching quietly or engaged in casual chat."
+        
+    return "The room is mixed. Different opinions are being shared with no clear dominant sentiment."
 
 
 # ===== API KEYS =====
@@ -436,26 +368,17 @@ def analyze_live():
         if context and all_texts:
             labels = gemini_batch_classify(all_texts, context)
         else:
-            # Pass recent messages for context-aware sentiment
-            labels = []
-            for i, t in enumerate(all_texts):
-                ctx = all_texts[max(0, i-2):i]
-                s, _ = classify_sentiment(t, ctx)
-                labels.append(s)
+            labels = [classify_simple(t) for t in all_texts]
 
         for i, t in enumerate(all_texts):
             s = labels[i]
             counts[s] += 1
             msgs.append({"text": t, "sentiment": s, "author": all_authors[i]})
 
-        # YouTube Pre-loading: If this is the first call (no pageToken),
-        # we naturally get the most recent messages. The frontend can
-        # request more or we can just ensure we return a good initial set.
-        
         return jsonify({
             "messages": msgs,
             "counts": counts,
-            "summary": summarize(counts, msgs),
+            "summary": summarize(counts),
             "nextPageToken": res.get("nextPageToken")
         })
     except Exception as e:
@@ -524,61 +447,73 @@ def extract_keywords(messages, top_n=10):
     return meaningful[:top_n]
 
 def generate_twitch_summary(messages):
-    """ADVANCED: Generate analytical summary for chat using FLAN-T5."""
-    if len(messages) < 15:
-        return "Not enough data for a deep summary yet. Need at least 15 messages."
-    
-    counts = {"good": 0, "bad": 0, "neutral": 0}
-    for m in messages:
-        counts[m.get('sentiment', 'neutral')] += 1
-    
-    # Base summary from summarize() helper
-    text_summary = summarize(counts, messages)
-    
-    # Add a specific FLAN-T5 summary of the latest messages
-    if flan_model and len(messages) >= 20:
-        latest_text = " ".join([m['message'] for m in messages[-15:]])
-        prompt = f"Summarize the main topic of these chat messages in one short sentence: {latest_text}"
-        topic_summary = flan_generate(prompt)
-        if topic_summary:
-            text_summary += f" Currently, the chat is mainly discussing: {topic_summary}."
-            
-    return text_summary
+    """Generate analytical summary for Twitch chat."""
+    if len(messages) < 20:
+        return "Not enough messages yet to generate a summary."
+    keywords = extract_keywords(messages, top_n=8)
+    keyword_list = [w for w, c in keywords]
+    good_count = sum(1 for m in messages if m['sentiment'] == 'good')
+    bad_count = sum(1 for m in messages if m['sentiment'] == 'bad')
+    neutral_count = sum(1 for m in messages if m['sentiment'] == 'neutral')
+    total = len(messages)
+    summary_parts = []
+    if good_count > total * 0.6:
+        summary_parts.append("The chat atmosphere is overwhelmingly positive with viewers expressing enthusiasm and support.")
+    elif bad_count > total * 0.4:
+        summary_parts.append("There's notable negativity in the chat with viewers expressing frustration or criticism.")
+    elif neutral_count > total * 0.6:
+        summary_parts.append("Chat activity is relatively neutral with casual conversation and minimal strong reactions.")
+    else:
+        summary_parts.append("The chat shows mixed sentiment with varied viewer reactions.")
+    if keyword_list:
+        top_topics = ", ".join(keyword_list[:5])
+        summary_parts.append(f"Main discussion topics include: {top_topics}.")
+    if total > 100:
+        summary_parts.append(f"High engagement with {total} messages analyzed.")
+    elif total > 50:
+        summary_parts.append(f"Moderate engagement with {total} messages.")
+    else:
+        summary_parts.append(f"Growing engagement with {total} messages so far.")
+    return " ".join(summary_parts)
 
 def generate_twitch_suggestions(messages, counts):
-    """ADVANCED: Generate actionable streamer insights using FLAN-T5."""
+    """Generate actionable streamer suggestions."""
     if len(messages) < 20:
-        return {"suggestions": ["📊 Waiting for more chat volume (need 20+ msgs)."], "note": "Keep the engagement high!"}
-    
+        return {"suggestions": ["Need at least 20 messages to generate insights."], "note": "Keep the conversation going!"}
     suggestions = []
-    total = sum(counts.values()) or 1
-    pg = (counts.get('good', 0) / total) * 100
-    pb = (counts.get('bad', 0) / total) * 100
-    
-    # 1. Performance Tiers
-    if pg > 75: suggestions.append("🌟 PEAK ENERGY: Audience sentiment is extremely high. This is the perfect time for a hype-train or special announcement.")
-    elif pb > 40: suggestions.append("🧨 CRISIS MODE: Significant negativity detected. Try to address specific complaints or shift the activity.")
-    elif pg > 50: suggestions.append("📈 MOMENTUM: Doing great! Acknowledging recent subs or donations would boost this further.")
-    
-    # 2. FLAN-T5 Powered Actionable Insights
-    if flan_model and len(messages) >= 20:
-        # Ask T5 to find what users want
-        msgs_text = " ".join([m['message'] for m in messages[-20:]])
-        prompt = f"Based on these chat messages, what is one specific action the streamer should take to improve the stream? messages: {msgs_text}"
-        ai_action = flan_generate(prompt)
-        if ai_action and len(ai_action) > 5:
-            suggestions.append(f"🤖 AI RECOMMENDATION: {ai_action.capitalize()}")
-    
-    # 3. Topic-based advice
-    keywords = extract_keywords(messages, top_n=5)
+    total = sum(counts.values())
+    if total == 0:
+        return {"suggestions": ["No data available yet."], "note": "Waiting for chat activity..."}
+    good_pct = (counts.get('good', 0) / total) * 100
+    bad_pct = (counts.get('bad', 0) / total) * 100
+    neutral_pct = (counts.get('neutral', 0) / total) * 100
+    if good_pct > 70:
+        suggestions.append(f"Excellent Performance: Chat sentiment is overwhelmingly positive ({round(good_pct, 1)}% positive). Keep it up!")
+    elif good_pct > 50:
+        suggestions.append(f"Strong Positive Response: Majority ({round(good_pct, 1)}% positive) are enjoying the stream.")
+    elif bad_pct > 40:
+        suggestions.append(f"High Negativity Alert: {round(bad_pct, 1)}% negative. Consider addressing viewer concerns.")
+    elif bad_pct > 25:
+        suggestions.append(f"Moderate Negativity: {round(bad_pct, 1)}% negative. Monitor chat for common complaints.")
+    if neutral_pct > 70:
+        suggestions.append(f"Low Engagement: {round(neutral_pct, 1)}% neutral. Try polls or Q&A to boost interaction.")
+    bad_messages = [m['message'].lower() for m in messages if m['sentiment'] == 'bad']
+    if len(bad_messages) >= 5:
+        complaint_keywords = Counter()
+        for msg in bad_messages[:30]:
+            words = re.findall(r'\b[a-z]{4,}\b', msg)
+            complaint_keywords.update(words)
+        stop_words = {'this', 'that', 'what', 'when', 'where', 'why', 'how', 'they', 'there'}
+        common_complaints = [(w, c) for w, c in complaint_keywords.most_common(5) if w not in stop_words and c >= 2]
+        if common_complaints:
+            complaint_terms = ", ".join([w for w, c in common_complaints[:3]])
+            suggestions.append(f"Common Complaints: Viewers mention '{complaint_terms}'. Address these directly.")
+    keywords = extract_keywords(messages, top_n=10)
     if keywords:
-        top_topic = keywords[0][0]
-        suggestions.append(f"🎯 ENGAGEMENT: '{top_topic}' is trending. Asking the audience for their opinion on this would drive more interaction.")
-    
-    if len(suggestions) < 2:
-        suggestions.append("📊 BALANCE: The chat is currently stable. Maintain natural interaction.")
-        
-    return {"suggestions": suggestions[:4], "note": f"Deep analysis performed on {total} messages."}
+        suggestions.append(f"Trending Topic: '{keywords[0][0]}' is being discussed heavily.")
+    if not suggestions:
+        suggestions.append("Chat analysis: Sentiment appears balanced. Keep engaging naturally.")
+    return {"suggestions": suggestions[:5], "note": f"Analysis based on {total} messages"}
 
 def calculate_stream_score(counts, messages):
     """Calculate stream health score 0-100."""
@@ -610,9 +545,6 @@ class TwitchIRCClient:
     def connect(self):
         try:
             print(f"Connecting to Twitch #{self.channel}...")
-            # Preload history first
-            self.preload_history()
-            
             self.sock = socket.socket()
             self.sock.settimeout(30)
             self.sock.connect((self.irc_server, self.irc_port))
@@ -626,36 +558,6 @@ class TwitchIRCClient:
         except Exception as e:
             print(f"Twitch IRC connection failed: {e}")
             raise
-
-    def preload_history(self):
-        """Fetch recent messages from Robotty API without blocking connection too long."""
-        def _task():
-            try:
-                print(f"📜 [Twitch] Pre-loading history for #{self.channel}...")
-                url = f"https://recent-messages.robotty.de/api/v2/recent-messages/{self.channel}?limit=40"
-                r = requests.get(url, timeout=5)
-                if r.status_code == 200:
-                    data = r.json()
-                    messages = data.get("messages", [])
-                    # Reverse to process chronologically
-                    for msg_line in messages:
-                        # Try parsing different formats
-                        user, content = "Viewer", msg_line
-                        match = re.search(r':([^!]+)![^ ]+ PRIVMSG #[^ ]+ :(.+)', msg_line)
-                        if match:
-                            user = match.group(1)
-                            content = match.group(2)
-                        elif " : " in msg_line:
-                            user, content = msg_line.split(" : ", 1)
-                            if " " in user: user = user.split()[-1]
-                        
-                        self.process_message(user, content)
-                print(f"✅ [Twitch] Pre-loading complete for #{self.channel}")
-            except Exception as e:
-                print(f"⚠️ Twitch history preload failed: {e}")
-        
-        threading.Thread(target=_task, daemon=True).start()
-
 
     def read_messages(self):
         buf = ""
@@ -687,19 +589,13 @@ class TwitchIRCClient:
                 time.sleep(1)
 
     def process_message(self, username, message):
-        # Get context from buffer
-        recent_msgs = []
-        if self.channel in twitch_chat_buffers:
-            recent_msgs = [m['message'] for m in list(twitch_chat_buffers[self.channel])[-3:]]
-        
-        sentiment, confidence = classify_sentiment(message, recent_msgs)
+        sentiment = classify_simple(message)
         msg_obj = {
             "user": username,
             "time": datetime.now().strftime("%H:%M:%S"),
             "timestamp": datetime.now().isoformat(),
             "message": message,
             "sentiment": sentiment,
-            "confidence": confidence,
             "author": username
         }
         if self.channel not in twitch_chat_buffers:
@@ -766,33 +662,6 @@ class KickChatClient:
         self._chatroom_id = chatroom_id
         self.running = True
         print(f"✅ Kick #{self.channel} → chatroom_id={chatroom_id}")
-        # Preload history
-        self.preload_history()
-
-    def preload_history(self):
-        """Fetch recent messages from Kick API in background."""
-        def _task():
-            try:
-                print(f"📜 [Kick] Pre-loading history for #{self.channel}...")
-                url = f"https://kick.com/api/v2/channels/{self.channel}/messages"
-                r = requests.get(url, timeout=10, headers={
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-                })
-                if r.status_code == 200:
-                    data = r.json()
-                    messages = data.get("data", {}).get("messages", []) or data.get("messages", [])
-                    # Reverse to process chronologically (oldest first)
-                    for msg in reversed(messages[:40]):
-                        user = msg.get("sender", {}).get("username", "Viewer")
-                        content = msg.get("content", "")
-                        if content:
-                            content = re.sub(r'\[emote:\d+:[^\]]+\]', '', content).strip()
-                            self.process_message(user, content)
-                print(f"✅ [Kick] Pre-loading complete for #{self.channel}")
-            except Exception as e:
-                print(f"⚠️ Kick history preload failed: {e}")
-        threading.Thread(target=_task, daemon=True).start()
-
 
     def _kick_json(self, url, session=None):
         """Shared helper: fetch a Kick JSON endpoint, return parsed dict or None."""
@@ -985,20 +854,15 @@ class KickChatClient:
         self._ws.run_forever(ping_interval=30, ping_timeout=10)
 
     def process_message(self, username, message):
-        recent_msgs = []
-        if self.channel in kick_chat_buffers:
-            recent_msgs = [m['message'] for m in list(kick_chat_buffers[self.channel])[-3:]]
-            
-        sentiment, confidence = classify_sentiment(message, recent_msgs)
+        sentiment = classify_simple(message)
         msg_obj = {
-            "user":       username,
-            "time":       datetime.now().strftime("%H:%M:%S"),
-            "timestamp":  datetime.now().isoformat(),
-            "message":    message,
-            "sentiment":  sentiment,
-            "confidence": confidence,
-            "platform":   "kick",
-            "author":     username
+            "user": username,
+            "time": datetime.now().strftime("%H:%M:%S"),
+            "timestamp": datetime.now().isoformat(),
+            "message": message,
+            "sentiment": sentiment,
+            "author": username,
+            "platform": "kick"
         }
         if self.channel not in kick_chat_buffers:
             kick_chat_buffers[self.channel] = deque(maxlen=MAX_BUFFER_SIZE)

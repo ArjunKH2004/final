@@ -10,7 +10,3 @@ google-generativeai
 websocket-client
 requests
 gunicorn
-torch
-transformers
-accelerate
-eventlet
