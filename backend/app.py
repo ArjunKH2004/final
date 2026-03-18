@@ -21,33 +21,44 @@ from collections import deque, Counter
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ===== ADVANCED AI MODEL SETUP =====
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "TransModelSimpRoberta2")
 TOKENIZER_PATH = os.path.join(BASE_DIR, "Tokenizer5")
 
-try:
-    print(f"Loading BERT sentiment model from: {MODEL_PATH}")
-    bert_tokenizer = BertTokenizer.from_pretrained(TOKENIZER_PATH)
-    bert_model = BertForSequenceClassification.from_pretrained(MODEL_PATH)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    bert_model.to(device)
-    bert_model.eval()
-    print(f"✅ BERT model loaded on {device}!")
-except Exception as e:
-    print(f"Error loading BERT model: {e}")
-    bert_model = None
+# Cloud-Safe Mode: Skip heavy models on Render or if files missing
+IS_RENDER = os.environ.get("RENDER") is not None
+SKIP_HEAVY_MODELS = IS_RENDER or not os.path.exists(MODEL_PATH)
 
-try:
-    print("Loading FLAN-T5 for insights...")
-    flan_tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-small")
-    flan_model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-small")
-    print("✅ FLAN-T5 loaded!")
-except Exception as e:
-    print(f"Error loading FLAN-T5: {e}")
-    flan_model = None
+bert_model = None
+flan_model = None
+
+if SKIP_HEAVY_MODELS:
+    print(f"🚀 CLOUD-SAFE MODE: {'Render detected' if IS_RENDER else 'Models missing'}. Skipping heavy AI loads.")
+else:
+    try:
+        print(f"Loading BERT sentiment model from: {MODEL_PATH}")
+        bert_tokenizer = BertTokenizer.from_pretrained(TOKENIZER_PATH)
+        bert_model = BertForSequenceClassification.from_pretrained(MODEL_PATH)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        bert_model.to(device)
+        bert_model.eval()
+        print(f"✅ BERT model loaded on {device}!")
+    except Exception as e:
+        print(f"Error loading BERT model: {e}")
+        bert_model = None
+
+    try:
+        print("Loading FLAN-T5 for insights...")
+        flan_tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-small")
+        flan_model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-small")
+        print("✅ FLAN-T5 loaded!")
+    except Exception as e:
+        print(f"Error loading FLAN-T5: {e}")
+        flan_model = None
 
 LABEL_MAP = {0: "bad", 1: "neutral", 2: "good"}
 CONTEXT_SEP = " [CTX] "

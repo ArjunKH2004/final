@@ -13,3 +13,4 @@ gunicorn
 torch
 transformers
 accelerate
+eventlet
