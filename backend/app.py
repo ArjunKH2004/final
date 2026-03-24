@@ -892,10 +892,49 @@ def twitch_connect():
     try:
         client = TwitchIRCClient(channel)
         client.connect()
+        
+        # Pre-load 50 recent messages for Twitch
+        try:
+            print(f"Pre-loading recent messages for Twitch #{channel}...")
+            history_url = f"https://recent-messages.robotty.de/api/v2/recent-messages/{channel}?limit=50"
+            h_res = requests.get(history_url, timeout=5)
+            if h_res.status_code == 200:
+                h_data = h_res.json()
+                recent_msgs = h_data.get("messages", [])
+                if channel not in twitch_chat_buffers:
+                    twitch_chat_buffers[channel] = deque(maxlen=MAX_BUFFER_SIZE)
+                
+                for rm in recent_msgs:
+                    # Parse robotty format: "2024-03-24 13:00:00 user: message" or similar
+                    # Actually robotty returns raw IRC lines or structured data depending on version.
+                    # v2 structured: {"messages": ["line1", "line2", ...]}
+                    # Let's assume raw IRC lines for now or try to parse them simply.
+                    # Looking at typical robotty response: 
+                    # ":user!user@user.tmi.twitch.tv PRIVMSG #channel :message"
+                    line = rm
+                    if 'PRIVMSG' in line:
+                        parts = line.split('PRIVMSG', 1)
+                        user = parts[0].split('!')[0].replace(':', '').strip()
+                        msg = parts[1].split(':', 1)[-1].strip()
+                        if user and msg and not detect_spam(msg):
+                            sentiment = classify_simple(msg)
+                            msg_obj = {
+                                "user": user,
+                                "time": datetime.now().strftime("%H:%M:%S"),
+                                "timestamp": datetime.now().isoformat(),
+                                "message": msg,
+                                "sentiment": sentiment,
+                                "author": user
+                            }
+                            twitch_chat_buffers[channel].append(msg_obj)
+                print(f"Pre-loaded {len(recent_msgs)} messages for Twitch #{channel}")
+        except Exception as e:
+            print(f"Twitch pre-loading failed: {e}")
+
         thread = threading.Thread(target=client.read_messages, daemon=True)
         thread.start()
         active_twitch_connections[channel] = client
-        return jsonify({"success": True, "channel": channel, "message": f"Connected to #{channel}"})
+        return jsonify({"success": True, "channel": channel, "message": f"Connected to #{channel} with pre-loaded history"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -1002,10 +1041,44 @@ def kick_connect():
             except (ValueError, TypeError):
                 pass
         client.connect()
+        
+        # Pre-load 50 recent messages for Kick
+        try:
+            print(f"Pre-loading recent messages for Kick #{channel}...")
+            # Kick v2 messages endpoint
+            # We can use the same strategies as chatroom_id resolution
+            history_url = f"https://kick.com/api/v2/channels/{channel}/messages"
+            # Using the client's internal session or helper to fetch history
+            h_data = client._kick_json(history_url)
+            if h_data and "messages" in h_data:
+                msgs = h_data["messages"]
+                if channel not in kick_chat_buffers:
+                    kick_chat_buffers[channel] = deque(maxlen=MAX_BUFFER_SIZE)
+                
+                for km in msgs:
+                    user = km.get("sender", {}).get("username", "unknown")
+                    content = km.get("content", "")
+                    content = re.sub(r'\[emote:\d+:[^\]]+\]', '', content).strip()
+                    if content and not detect_spam(content):
+                        sentiment = classify_simple(content)
+                        msg_obj = {
+                            "user": user,
+                            "time": datetime.now().strftime("%H:%M:%S"),
+                            "timestamp": datetime.now().isoformat(),
+                            "message": content,
+                            "sentiment": sentiment,
+                            "author": user,
+                            "platform": "kick"
+                        }
+                        kick_chat_buffers[channel].append(msg_obj)
+                print(f"Pre-loaded {len(msgs)} messages for Kick #{channel}")
+        except Exception as e:
+            print(f"Kick pre-loading failed: {e}")
+
         thread = threading.Thread(target=client.read_messages, daemon=True)
         thread.start()
         active_kick_connections[channel] = client
-        return jsonify({"success": True, "channel": channel, "message": f"Connected to Kick #{channel}"})
+        return jsonify({"success": True, "channel": channel, "message": f"Connected to Kick #{channel} with pre-loaded history"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
