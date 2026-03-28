@@ -17,10 +17,6 @@ import requests
 from datetime import datetime
 from collections import deque, Counter
 
-from sklearn.feature_extraction.text import TfidfVectorizer #edit made for extension
-class tfIdfInheritVectorizer(TfidfVectorizer):
-    pass
-
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
