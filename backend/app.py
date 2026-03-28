@@ -23,6 +23,9 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # ===== SKLEARN MODEL SETUP =====
 # Using saved scikit-learn classifier and TF-IDF vectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer #edit made for extension to work
+class tfIdfInheritVectorizer(TfidfVectorizer):
+    pass
 
 import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
