@@ -203,8 +203,8 @@ KICK_CLIENT_ID = os.environ.get("KICK_CLIENT_ID", "01KKHHF5BP1WD1N566KH7P5BCS")
 
 
 # ===== PLATFORM HELPERS =====
+# YouTube API client. Uses hardcoded key if none provided.
 def yt(api_key=None):
-    """YouTube API client. Uses hardcoded key if none provided."""
     key = api_key or YOUTUBE_API_KEY
     return build("youtube", "v3", developerKey=key)
 
@@ -1178,6 +1178,15 @@ def handle_ws_connect():
 @socketio.on('disconnect')
 def handle_ws_disconnect():
     print("WebSocket client disconnected")
+
+# Serve Next.js static files - CATCH ALL (must be at the bottom)
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == "__main__":
     import os
