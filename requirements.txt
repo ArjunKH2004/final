@@ -1,3 +1,5 @@
+setuptools
+wheel
 flask
 google-api-python-client
 textblob
