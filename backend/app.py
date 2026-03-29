@@ -27,11 +27,33 @@ import sys
 import pickle
 import traceback
 
-# Ensure root (where tfIdfInheritVectorizer.py is) is in path
+# ===== PICKLE PATCH FOR MISSING Vectorizer =====
+import sys
+import types
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# Define the missing class locally
+class tfIdfInheritVectorizer(TfidfVectorizer):
+    """Placeholder for the missing vectorizer class used during pickling."""
+    pass
+
+# Mock the module so pickle can find it regardless of how it was saved
+# We try to satisfy both 'tfIdfInheritVectorizer' and 'backend.tfIdfInheritVectorizer'
+mock_mod = types.ModuleType("tfIdfInheritVectorizer")
+mock_mod.tfIdfInheritVectorizer = tfIdfInheritVectorizer
+sys.modules["tfIdfInheritVectorizer"] = mock_mod
+
+# ===== SKLEARN MODEL SETUP =====
+import os
+import pickle
+import traceback
+
+# Add backend and root to path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
-if ROOT_DIR not in sys.path:
-    sys.path.insert(0, ROOT_DIR)
+for d in [BASE_DIR, ROOT_DIR]:
+    if d not in sys.path:
+        sys.path.insert(0, d)
 
 MODEL_PATH = os.environ.get("MODEL_PATH", os.path.join(BASE_DIR, "yt_ai_classifier_model_2.sav"))
 VECTORIZER_PATH = os.environ.get("VECTORIZER_PATH", os.path.join(BASE_DIR, "tfidf_vectorizer.sav"))
