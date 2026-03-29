@@ -190,13 +190,22 @@ function AnalyzeContent() {
                 } else {
                     const staticAnalysis = await analyzeStatic(videoId, "", 50, videoContext);
                     setAnalysis(staticAnalysis);
-                    setComments(staticAnalysis.comments.map((c: any, i: number) => ({
-                        id: i,
-                        username: "Commenter",
-                        message: c.text,
-                        color: c.sentiment === "good" ? "#22C55E" : c.sentiment === "bad" ? "#EF4444" : "#8B5CF6"
-                    })));
-                    getYouTubeSuggestions(staticAnalysis.counts, staticAnalysis.comments).then(setYtSuggestions).catch(() => {});
+                    
+                    if (staticAnalysis.error) {
+                        alert(`Analysis error: ${staticAnalysis.error}`);
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    if (staticAnalysis.comments) {
+                        setComments(staticAnalysis.comments.map((c: any, i: number) => ({
+                            id: i,
+                            username: "Commenter",
+                            message: c.text,
+                            color: c.sentiment === "good" ? "#22C55E" : c.sentiment === "bad" ? "#EF4444" : "#8B5CF6"
+                        })));
+                        getYouTubeSuggestions(staticAnalysis.counts, staticAnalysis.comments).then(setYtSuggestions).catch(() => {});
+                    }
                 }
             } else if (selectedPlatform === "yt-static") {
                 setTwitchConnected(false);
@@ -224,13 +233,22 @@ function AnalyzeContent() {
                 // For YT-Static, we always use analyzeStatic with "all" (or a high limit)
                 const staticAnalysis = await analyzeStatic(videoId, "", "all", videoContext);
                 setAnalysis(staticAnalysis);
-                setComments(staticAnalysis.comments.map((c: any, i: number) => ({
-                    id: i,
-                    username: "Commenter",
-                    message: c.text,
-                    color: c.sentiment === "good" ? "#22C55E" : c.sentiment === "bad" ? "#EF4444" : "#8B5CF6"
-                })));
-                getYouTubeSuggestions(staticAnalysis.counts, staticAnalysis.comments).then(setYtSuggestions).catch(() => {});
+
+                if (staticAnalysis.error) {
+                    alert(`Analysis error: ${staticAnalysis.error}`);
+                    setIsLoading(false);
+                    return;
+                }
+
+                if (staticAnalysis.comments) {
+                    setComments(staticAnalysis.comments.map((c: any, i: number) => ({
+                        id: i,
+                        username: "Commenter",
+                        message: c.text,
+                        color: c.sentiment === "good" ? "#22C55E" : c.sentiment === "bad" ? "#EF4444" : "#8B5CF6"
+                    })));
+                    getYouTubeSuggestions(staticAnalysis.counts, staticAnalysis.comments).then(setYtSuggestions).catch(() => {});
+                }
                 
             } else if (selectedPlatform === "kick") {
                 const channel = extractKickChannel(streamUrl);
