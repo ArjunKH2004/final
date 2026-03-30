@@ -23,7 +23,7 @@ const features = [
 
 export default function Features() {
   return (
-    <section className="relative py-32 px-6 bg-black">
+    <section id="about" className="relative py-32 px-6 bg-black">
       <div className="max-w-7xl mx-auto">
         {/* Introduction */}
         <motion.div

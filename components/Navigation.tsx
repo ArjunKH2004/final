@@ -32,24 +32,11 @@ export default function Navigation() {
               Home
             </Link>
             <a
-              href="#"
+              href="/#about"
               className="text-gray-300 font-semibold text-base hover:text-white transition-colors"
             >
               About
             </a>
-            <a
-              href="#"
-              className="text-gray-300 font-semibold text-base hover:text-white transition-colors"
-            >
-              Log In
-            </a>
-            <Image
-              src="/images/nav/signup-btn.png"
-              alt="Sign Up"
-              width={100}
-              height={35}
-              className="cursor-pointer hover:opacity-90 transition-opacity"
-            />
           </div>
         </nav>
 
@@ -84,20 +71,11 @@ export default function Navigation() {
               Home
             </Link>
             <a
-              href="#"
+              href="/#about"
               className="block text-gray-300 px-4 py-3 rounded-full font-semibold text-center hover:text-white transition-colors text-sm sm:text-base"
             >
               About
             </a>
-            <a
-              href="#"
-              className="block text-gray-300 px-4 py-3 rounded-full font-semibold text-center hover:text-white transition-colors text-sm sm:text-base"
-            >
-              Log In
-            </a>
-            <button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-3 rounded-full font-semibold hover:opacity-90 transition-opacity text-sm sm:text-base">
-              Sign Up
-            </button>
             <Link href="/analyze" className="flex justify-center pt-2">
               <Image
                 src="/images/nav/Analyze-btn.png"
