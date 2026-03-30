@@ -1197,6 +1197,257 @@ class KickChatClient:
         self._ws = None
         print(f"🔌 Kick #{self.channel} disconnected")
 
+# ===== COMPARE STREAMS ENGINE =====
+MOOD_RANK = {
+    "Hatred/Toxic 🤬": 1, "Complaint 😤": 2, "Criticism 🧐": 3,
+    "Questioning 🧐": 4, "Neutral 😐": 5, "Chill 😌": 6,
+    "Happy/Hype 🔥": 7,
+}
+
+def generate_comparison_verdict(a_data, b_data, a_label, b_label):
+    """Generate an intelligent comparison verdict between two streams."""
+    verdict = {"dimensions": [], "overall_winner": None, "conclusion": ""}
+    a_wins = 0
+    b_wins = 0
+    
+    # 1. Sentiment comparison
+    a_pos = a_data.get("percentages", {}).get("good", 0)
+    b_pos = b_data.get("percentages", {}).get("good", 0)
+    a_neg = a_data.get("percentages", {}).get("bad", 0)
+    b_neg = b_data.get("percentages", {}).get("bad", 0)
+    a_positivity = a_pos - a_neg
+    b_positivity = b_pos - b_neg
+    sent_winner = a_label if a_positivity > b_positivity else b_label if b_positivity > a_positivity else "Tie"
+    if sent_winner == a_label: a_wins += 1
+    elif sent_winner == b_label: b_wins += 1
+    verdict["dimensions"].append({
+        "name": "Sentiment",
+        "icon": "😊",
+        "winner": sent_winner,
+        "detail": f"{a_label}: {a_pos}% positive, {a_neg}% negative | {b_label}: {b_pos}% positive, {b_neg}% negative",
+        "a_value": round(a_positivity, 1),
+        "b_value": round(b_positivity, 1),
+    })
+    
+    # 2. Stream Score
+    a_score = a_data.get("stream_score", 50)
+    b_score = b_data.get("stream_score", 50)
+    score_winner = a_label if a_score > b_score else b_label if b_score > a_score else "Tie"
+    if score_winner == a_label: a_wins += 1
+    elif score_winner == b_label: b_wins += 1
+    verdict["dimensions"].append({
+        "name": "Stream Score",
+        "icon": "⚡",
+        "winner": score_winner,
+        "detail": f"{a_label}: {a_score}/100 | {b_label}: {b_score}/100",
+        "a_value": a_score,
+        "b_value": b_score,
+    })
+    
+    # 3. Engagement (total messages)
+    a_msgs = a_data.get("total_messages", 0)
+    b_msgs = b_data.get("total_messages", 0)
+    eng_winner = a_label if a_msgs > b_msgs else b_label if b_msgs > a_msgs else "Tie"
+    if eng_winner == a_label: a_wins += 1
+    elif eng_winner == b_label: b_wins += 1
+    verdict["dimensions"].append({
+        "name": "Engagement",
+        "icon": "💬",
+        "winner": eng_winner,
+        "detail": f"{a_label}: {a_msgs} messages | {b_label}: {b_msgs} messages",
+        "a_value": a_msgs,
+        "b_value": b_msgs,
+    })
+    
+    # 4. Mood comparison
+    a_mood = a_data.get("mood", "Neutral 😐")
+    b_mood = b_data.get("mood", "Neutral 😐")
+    a_mood_rank = MOOD_RANK.get(a_mood, 5)
+    b_mood_rank = MOOD_RANK.get(b_mood, 5)
+    mood_winner = a_label if a_mood_rank > b_mood_rank else b_label if b_mood_rank > a_mood_rank else "Tie"
+    if mood_winner == a_label: a_wins += 1
+    elif mood_winner == b_label: b_wins += 1
+    verdict["dimensions"].append({
+        "name": "Chat Mood",
+        "icon": "🎭",
+        "winner": mood_winner,
+        "detail": f"{a_label}: {a_mood} | {b_label}: {b_mood}",
+        "a_value": a_mood_rank,
+        "b_value": b_mood_rank,
+    })
+    
+    # 5. Community health (engagement pattern)
+    a_pattern = a_data.get("engagement_pattern", "regular")
+    b_pattern = a_data.get("engagement_pattern", "regular")
+    pattern_rank = {"broad participation": 3, "regular engagement": 2, "dominated by few": 1, "warming up": 1, "mixed": 2}
+    a_pr = pattern_rank.get(a_pattern, 2)
+    b_pr = pattern_rank.get(b_pattern, 2)
+    comm_winner = a_label if a_pr > b_pr else b_label if b_pr > a_pr else "Tie"
+    if comm_winner == a_label: a_wins += 1
+    elif comm_winner == b_label: b_wins += 1
+    verdict["dimensions"].append({
+        "name": "Community Health",
+        "icon": "👥",
+        "winner": comm_winner,
+        "detail": f"{a_label}: {a_pattern} | {b_label}: {b_pattern}",
+        "a_value": a_pr,
+        "b_value": b_pr,
+    })
+    
+    # Overall winner
+    if a_wins > b_wins:
+        verdict["overall_winner"] = a_label
+    elif b_wins > a_wins:
+        verdict["overall_winner"] = b_label
+    else:
+        verdict["overall_winner"] = "Tie"
+    
+    # Generate conclusion paragraph
+    winner = verdict["overall_winner"]
+    loser = b_label if winner == a_label else a_label if winner == b_label else None
+    
+    parts = []
+    if winner == "Tie":
+        parts.append(f"Both {a_label} and {b_label} are performing comparably, resulting in a tightly contested {a_wins}-{b_wins} draw.")
+    else:
+        parts.append(f"{winner} takes the crown in this comparison.")
+        
+        # Detail why they won based on dimensions
+        winning_dims = [d["name"] for d in verdict["dimensions"] if d["winner"] == winner]
+        if winning_dims:
+            if len(winning_dims) == 1:
+                parts.append(f"This victory is driven primarily by its stronger performance in {winning_dims[0]}.")
+            else:
+                formatted_dims = ", ".join(winning_dims[:-1]) + f", and {winning_dims[-1]}" if len(winning_dims) > 2 else f"{winning_dims[0]} and {winning_dims[1]}"
+                parts.append(f"It completely outperformed its rival in {formatted_dims}.")
+    
+    # Sentiment insight
+    if abs(a_positivity - b_positivity) >= 5:
+        better = a_label if a_positivity > b_positivity else b_label
+        parts.append(f"Furthermore, {better}'s chat is significantly more positive (a {abs(round(a_positivity - b_positivity, 1))}% positivity gap).")
+    
+    # Engagement insight
+    if a_msgs > 0 and b_msgs > 0:
+        ratio = max(a_msgs, b_msgs) / max(min(a_msgs, b_msgs), 1)
+        if ratio > 1.2:
+            more = a_label if a_msgs > b_msgs else b_label
+            parts.append(f"{more} also boasts {round(ratio, 1)}x more chat activity, indicating much higher viewer participation.")
+    
+    # Mood insight
+    if a_mood != b_mood:
+        parts.append(f"The overall chat moods reflect this divide — {a_label} is experiencing '{a_mood}' while {b_label} is leaning towards '{b_mood}'.")
+    
+    if winner != "Tie" and loser:
+        parts.append(f"While {loser} might have moments of strength, {winner} currently provides a far more engaging and positive stream environment.")
+    
+    verdict["conclusion"] = " ".join(parts)
+    verdict["a_wins"] = a_wins
+    verdict["b_wins"] = b_wins
+    
+    return verdict
+
+AVATAR_CACHE = {}
+
+def get_avatar_url(platform, channel):
+    key = f"{platform}:{channel}"
+    if key in AVATAR_CACHE: return AVATAR_CACHE[key]
+    
+    avatar_url = None
+    if platform == "twitch":
+        try:
+            r = requests.get(f"https://decapi.me/twitch/avatar/{channel}", timeout=5)
+            if r.status_code == 200: avatar_url = r.text.strip()
+        except: pass
+    elif platform == "kick":
+        CORS_PROXIES = [
+            "https://api.allorigins.win/raw?url=",
+            "https://corsproxy.io/?",
+            "https://api.codetabs.com/v1/proxy?quest="
+        ]
+        import urllib.parse
+        target = f"https://kick.com/api/v2/channels/{channel}"
+        encoded = urllib.parse.quote(target, safe="")
+        for proxy in CORS_PROXIES:
+            try:
+                r = requests.get(f"{proxy}{encoded}", timeout=5)
+                if r.status_code == 200:
+                    data = r.json()
+                    avatar_url = data.get("user", {}).get("profile_pic")
+                    if avatar_url: break
+            except: continue
+            
+    AVATAR_CACHE[key] = avatar_url
+    return avatar_url
+
+@app.route("/api/compare", methods=["POST"])
+def compare_streams():
+    """Compare two streams and generate a verdict."""
+    data = request.json
+    stream_a = data.get("stream_a", {})
+    stream_b = data.get("stream_b", {})
+    
+    platform_a = stream_a.get("platform", "").lower()
+    channel_a = stream_a.get("channel", "").lower().strip()
+    platform_b = stream_b.get("platform", "").lower()
+    channel_b = stream_b.get("channel", "").lower().strip()
+    
+    if not channel_a or not channel_b:
+        return jsonify({"error": "Both channels are required"}), 400
+    
+    # Get analytics for stream A
+    buf_a = twitch_chat_buffers if platform_a == "twitch" else kick_chat_buffers
+    msgs_a = list(buf_a.get(channel_a, []))
+    
+    # Get analytics for stream B
+    buf_b = twitch_chat_buffers if platform_b == "twitch" else kick_chat_buffers
+    msgs_b = list(buf_b.get(channel_b, []))
+    
+    def build_analytics(messages, channel):
+        if not messages:
+            return {"counts": {"good": 0, "bad": 0, "neutral": 0}, "percentages": {"good": 0, "bad": 0, "neutral": 0}, "mood": "Waiting for chat...", "keywords": [], "stream_score": 50, "total_messages": 0, "top_user": "N/A", "top_chat": "N/A", "engagement_pattern": "warming up"}
+        counts = {
+            "good": sum(1 for m in messages if m['sentiment'] == 'good'),
+            "bad": sum(1 for m in messages if m['sentiment'] == 'bad'),
+            "neutral": sum(1 for m in messages if m['sentiment'] == 'neutral'),
+        }
+        total = len(messages)
+        percentages = {
+            "good": round((counts['good'] / total) * 100, 1) if total > 0 else 0,
+            "bad": round((counts['bad'] / total) * 100, 1) if total > 0 else 0,
+            "neutral": round((counts['neutral'] / total) * 100, 1) if total > 0 else 0,
+        }
+        exclude = {channel}
+        for part in channel.replace('_', ' ').replace('-', ' ').split():
+            if len(part) >= 3: exclude.add(part)
+        return {
+            "counts": counts,
+            "percentages": percentages,
+            "mood": calculate_stream_mood(messages),
+            "keywords": extract_keywords(messages, top_n=5, exclude_words=exclude),
+            "stream_score": calculate_stream_score(counts, messages),
+            "total_messages": total,
+            "top_user": analyse_sentiment_patterns(messages).get("top_user", "N/A"),
+            "top_chat": analyse_sentiment_patterns(messages).get("top_message", "N/A"),
+            "engagement_pattern": analyse_sentiment_patterns(messages).get("engagement_pattern", "regular"),
+        }
+    
+    analytics_a = build_analytics(msgs_a, channel_a)
+    analytics_b = build_analytics(msgs_b, channel_b)
+    
+    label_a = f"{channel_a} ({platform_a.capitalize()})"
+    label_b = f"{channel_b} ({platform_b.capitalize()})"
+    
+    verdict = generate_comparison_verdict(analytics_a, analytics_b, label_a, label_b)
+    
+    avatar_a = get_avatar_url(platform_a, channel_a)
+    avatar_b = get_avatar_url(platform_b, channel_b)
+    
+    return jsonify({
+        "stream_a": {"channel": channel_a, "platform": platform_a, "analytics": analytics_a, "avatar": avatar_a},
+        "stream_b": {"channel": channel_b, "platform": platform_b, "analytics": analytics_b, "avatar": avatar_b},
+        "verdict": verdict,
+    })
+
 # ===== TWITCH ROUTES =====
 @app.route("/api/twitch/connect", methods=["POST"])
 def twitch_connect():

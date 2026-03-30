@@ -185,7 +185,7 @@ function AnalyzeContent() {
                         id: i,
                         username: m.author || "Viewer",
                         message: m.text,
-                        color: m.sentiment === "good" ? "#22C55E" : m.sentiment === "bad" ? "#EF4444" : "#8B5CF6"
+                        color: m.sentiment === "good" ? "#22C55E" : m.sentiment === "bad" ? "#EF4444" : "#06B6D4"
                     })) || []);
                 } else {
                     const staticAnalysis = await analyzeStatic(videoId, "", 50, videoContext);
@@ -413,7 +413,7 @@ function AnalyzeContent() {
                         id: i,
                         username: m.user || m.author || "Viewer",
                         message: m.message,
-                        color: m.sentiment === "good" ? "#22C55E" : m.sentiment === "bad" ? "#EF4444" : "#8B5CF6"
+                        color: m.sentiment === "good" ? "#22C55E" : m.sentiment === "bad" ? "#EF4444" : "#06B6D4"
                     }));
                     setComments(mapped);
                     setAnalysis({ counts: data.counts, summary: "" });

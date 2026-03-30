@@ -126,3 +126,13 @@ export const getKickSuggestions = async (channel: string) => {
     const response = await fetch(`${API_BASE_URL}/api/kick/suggestions/${channel}`);
     return response.json();
 };
+
+// ===== COMPARE APIs =====
+export const compareStreams = async (streamA: { platform: string; channel: string }, streamB: { platform: string; channel: string }) => {
+    const response = await fetch(`${API_BASE_URL}/api/compare`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stream_a: streamA, stream_b: streamB }),
+    });
+    return response.json();
+};

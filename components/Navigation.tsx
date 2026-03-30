@@ -37,6 +37,12 @@ export default function Navigation() {
             >
               About
             </a>
+            <Link
+              href="/compare"
+              className="text-gray-300 font-semibold text-base hover:text-white transition-colors"
+            >
+              Compare
+            </Link>
           </div>
         </nav>
 
@@ -76,6 +82,12 @@ export default function Navigation() {
             >
               About
             </a>
+            <Link
+              href="/compare"
+              className="block text-gray-300 px-4 py-3 rounded-full font-semibold text-center hover:text-white transition-colors text-sm sm:text-base"
+            >
+              Compare
+            </Link>
             <Link href="/analyze" className="flex justify-center pt-2">
               <Image
                 src="/images/nav/Analyze-btn.png"
