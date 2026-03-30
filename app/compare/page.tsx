@@ -85,36 +85,42 @@ export default function ComparePage() {
         }
     };
 
-    // Poll messages
-    const pollMessages = useCallback(async (side: "a" | "b") => {
-        const stream = side === "a" ? streamA : streamB;
-        const setStream = side === "a" ? setStreamA : setStreamB;
-        if (!stream.connected || !stream.channel) return;
-
-        try {
-            const getMsgs = stream.platform === "twitch" ? getTwitchMessages : getKickMessages;
-            const getAna = stream.platform === "twitch" ? getTwitchAnalytics : getKickAnalytics;
-            const [msgData, anaData] = await Promise.all([getMsgs(stream.channel), getAna(stream.channel)]);
-
-            const mapped = (msgData.messages || []).map((m: any, i: number) => ({
-                id: i,
-                user: m.user || m.author || "Viewer",
-                message: m.message,
-                sentiment: m.sentiment,
-                color: m.sentiment === "good" ? "#22C55E" : m.sentiment === "bad" ? "#EF4444" : "#06B6D4",
-            }));
-            setStream(prev => ({ ...prev, messages: mapped, analytics: anaData }));
-        } catch (e) { /* silent */ }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [streamA.connected, streamA.channel, streamA.platform, streamB.connected, streamB.channel, streamB.platform]);
+    // Latest state refs for polling
+    const streamARef = useRef(streamA);
+    const streamBRef = useRef(streamB);
 
     useEffect(() => {
+        streamARef.current = streamA;
+        streamBRef.current = streamB;
+    }, [streamA, streamB]);
+
+    // Poll messages
+    useEffect(() => {
+        const poll = async (stream: StreamState, setStream: any) => {
+            if (!stream.connected || !stream.channel) return;
+
+            try {
+                const getMsgs = stream.platform === "twitch" ? getTwitchMessages : getKickMessages;
+                const getAna = stream.platform === "twitch" ? getTwitchAnalytics : getKickAnalytics;
+                const [msgData, anaData] = await Promise.all([getMsgs(stream.channel), getAna(stream.channel)]);
+
+                const mapped = (msgData.messages || []).map((m: any, i: number) => ({
+                    id: i,
+                    user: m.user || m.author || "Viewer",
+                    message: m.message,
+                    sentiment: m.sentiment,
+                    color: m.sentiment === "good" ? "#22C55E" : m.sentiment === "bad" ? "#EF4444" : "#06B6D4",
+                }));
+                setStream((prev: StreamState) => ({ ...prev, messages: mapped, analytics: anaData }));
+            } catch (e) { /* silent */ }
+        };
+
         const interval = setInterval(() => {
-            if (streamA.connected) pollMessages("a");
-            if (streamB.connected) pollMessages("b");
+            if (streamARef.current.connected) poll(streamARef.current, setStreamA);
+            if (streamBRef.current.connected) poll(streamBRef.current, setStreamB);
         }, 3000);
         return () => clearInterval(interval);
-    }, [streamA.connected, streamB.connected, pollMessages]);
+    }, []);
 
     // Auto-scroll chat
     useEffect(() => {
