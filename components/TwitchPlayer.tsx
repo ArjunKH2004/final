@@ -61,9 +61,10 @@ export default function TwitchPlayer({ channel }: TwitchPlayerProps) {
             }
         }
 
+        const container = containerRef.current;
         return () => {
-            if (containerRef.current) {
-                containerRef.current.innerHTML = "";
+            if (container) {
+                container.innerHTML = "";
             }
             playerRef.current = null;
         };

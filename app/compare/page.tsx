@@ -105,6 +105,7 @@ export default function ComparePage() {
             }));
             setStream(prev => ({ ...prev, messages: mapped, analytics: anaData }));
         } catch (e) { /* silent */ }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [streamA.connected, streamA.channel, streamA.platform, streamB.connected, streamB.channel, streamB.platform]);
 
     useEffect(() => {
@@ -400,15 +401,15 @@ export default function ComparePage() {
                                             <div className="space-y-3">
                                                 <div>
                                                     <div className="font-semibold text-green-400 mb-1">1. Positive 🟢 (Best)</div>
-                                                    <p className="text-gray-300 text-xs">Chatters are expressing happiness, excitement, support, or agreement (e.g. "W", "Let's go!", "Love this").</p>
+                                                    <p className="text-gray-300 text-xs">Chatters are expressing happiness, excitement, support, or agreement (e.g. &quot;W&quot;, &quot;Let&apos;s go!&quot;, &quot;Love this&quot;).</p>
                                                 </div>
                                                 <div>
                                                     <div className="font-semibold text-cyan-400 mb-1">2. Neutral 🔵</div>
-                                                    <p className="text-gray-300 text-xs">General questions, casual statements, or context-less interactions (e.g. "Hi", "What game is this?", "?").</p>
+                                                    <p className="text-gray-300 text-xs">General questions, casual statements, or context-less interactions (e.g. &quot;Hi&quot;, &quot;What game is this?&quot;, &quot;?&quot;).</p>
                                                 </div>
                                                 <div>
                                                     <div className="font-semibold text-red-400 mb-1">3. Negative 🔴 (Worst)</div>
-                                                    <p className="text-gray-300 text-xs">Chatters are complaining, using toxic language, disagreeing, or trolling (e.g. "L", "Boring", "Cringe").</p>
+                                                    <p className="text-gray-300 text-xs">Chatters are complaining, using toxic language, disagreeing, or trolling (e.g. &quot;L&quot;, &quot;Boring&quot;, &quot;Cringe&quot;).</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -442,6 +443,7 @@ export default function ComparePage() {
                             <div className="flex justify-between items-center text-sm font-semibold text-gray-300 mb-4">
                                 <div className="flex items-center gap-2">
                                     {verdict.stream_a.avatar ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
                                         <img src={verdict.stream_a.avatar} alt={verdict.stream_a.channel} className="w-8 h-8 rounded-full border border-gray-700 object-cover" />
                                     ) : (
                                         <div className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs">?</div>
@@ -451,6 +453,7 @@ export default function ComparePage() {
                                 <div className="flex items-center gap-2">
                                     <span style={{ color: "#53FC18" }}>{verdict.stream_b.channel} ({verdict.stream_b.platform})</span>
                                     {verdict.stream_b.avatar ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
                                         <img src={verdict.stream_b.avatar} alt={verdict.stream_b.channel} className="w-8 h-8 rounded-full border border-gray-700 object-cover" />
                                     ) : (
                                         <div className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs">?</div>
