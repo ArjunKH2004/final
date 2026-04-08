@@ -606,6 +606,39 @@ TOPIC_SIGNALS = {
     'tiktok','champion','victory','defeat','round','tournament','scrim','warmup',
 }
 
+def calculate_community_archetype(messages, patterns):
+    if len(messages) < 10:
+        return {"name": "Quiet Watchers", "icon": "👀", "color": "#9ca3af", "desc": "Chat is moving slowly. Highly observant."}
+    
+    unique_users = len(set(m.get('user', m.get('author')) for m in messages if m.get('user', m.get('author'))))
+    total = len(messages)
+    ratio = total / max(unique_users, 1) # msgs per user
+    
+    good = sum(1 for m in messages if m.get('sentiment') == 'good')
+    bad = sum(1 for m in messages if m.get('sentiment') == 'bad')
+    good_pct = good / total
+    bad_pct = bad / total
+    
+    intensity = patterns.get('intensity', 'moderate')
+    
+    if bad_pct > 0.4 and ratio > 3:
+        return {"name": "The Pitchforks", "icon": "🔥", "color": "#ef4444", "class": "text-red-500", "desc": "Highly vocal and predominantly negative. Damage control needed."}
+    if bad_pct > 0.3:
+        return {"name": "Opinionated Critics", "icon": "🧐", "color": "#f97316", "class": "text-orange-500", "desc": "Chat is expressing heavy skepticism or frustration."}
+    
+    if good_pct > 0.6 and ratio > 4:
+        return {"name": "The Hype Squad", "icon": "🚀", "color": "#8b5cf6", "class": "text-purple-500", "desc": "Spamming emotes and overwhelming support. Peak hype!"}
+    if good_pct > 0.5:
+        return {"name": "Supportive Fans", "icon": "💖", "color": "#ec4899", "class": "text-pink-500", "desc": "A wholesome and loving chat environment."}
+        
+    if ratio < 1.5 and total > 50:
+        return {"name": "The Melting Pot", "icon": "🌍", "color": "#06b6d4", "class": "text-cyan-500", "desc": "Many different users chiming in once. Broad engagement."}
+        
+    if intensity == "very high":
+        return {"name": "Meme Lords", "icon": "🤡", "color": "#f59e0b", "class": "text-yellow-500", "desc": "Intense emote usage and copy-pastas."}
+        
+    return {"name": "Regular Viewers", "icon": "👋", "color": "#3b82f6", "class": "text-blue-500", "desc": "Standard interaction mix of questions, reactions, and chill vibes."}
+
 def extract_keywords(messages, top_n=10, exclude_words=None):
     if not messages: return []
     if exclude_words is None: exclude_words = set()
@@ -753,61 +786,73 @@ def generate_twitch_summary(messages):
         summary_parts.append(f"Growing engagement with {total} messages so far.")
     return " ".join(summary_parts)
 
-def generate_twitch_suggestions(messages, counts, channel=""):
-    """Generate actionable streamer suggestions."""
+import time
+import json
+
+ai_suggestion_cache = {}
+
+def generate_twitch_suggestions(messages, counts, channel="general"):
+    """Generate actionable streamer suggestions using actual Gemini AI analysis."""
     if len(messages) < 20:
         return {"suggestions": ["Need at least 20 messages to generate insights."], "note": "Keep the conversation going!"}
-    suggestions = []
+        
     total = sum(counts.values())
     if total == 0:
         return {"suggestions": ["No data available yet."], "note": "Waiting for chat activity..."}
+        
+    global ai_suggestion_cache
+    current_time = time.time()
     
-    # Build exclude list from channel name
-    exclude = set()
-    if channel:
-        exclude.add(channel.lower())
-        for part in channel.lower().replace('_', ' ').replace('-', ' ').split():
-            if len(part) >= 3: exclude.add(part)
+    # Check cache (update every 20 seconds)
+    cache_entry = ai_suggestion_cache.get(channel)
+    if cache_entry and (current_time - cache_entry['timestamp'] < 20):
+        return {"suggestions": cache_entry['suggestions'], "note": f"Analysis based on {total} messages"}
+
+    chat_log = "\n".join([f"{m.get('user', 'Viewer')}: {m.get('message', '')}" for m in messages[-40:]])
     
-    good_pct = (counts.get('good', 0) / total) * 100
-    bad_pct = (counts.get('bad', 0) / total) * 100
-    neutral_pct = (counts.get('neutral', 0) / total) * 100
-    if good_pct > 70:
-        suggestions.append(f"Excellent Performance: Chat sentiment is overwhelmingly positive ({round(good_pct, 1)}% positive). Keep it up!")
-    elif good_pct > 50:
-        suggestions.append(f"Strong Positive Response: Majority ({round(good_pct, 1)}% positive) are enjoying the stream.")
-    elif bad_pct > 40:
-        suggestions.append(f"High Negativity Alert: {round(bad_pct, 1)}% negative. Consider addressing viewer concerns.")
-    elif bad_pct > 25:
-        suggestions.append(f"Moderate Negativity: {round(bad_pct, 1)}% negative. Monitor chat for common complaints.")
-    if neutral_pct > 70:
-        suggestions.append(f"Low Engagement: {round(neutral_pct, 1)}% neutral. Try polls or Q&A to boost interaction.")
+    prompt = f"""
+    You are an expert stream analyzer. Below are the last 40 chat messages from a live stream.
+    Strictly based on what these viewers are currently chatting about, extract exactly TWO actionable, concrete tips for the streamer.
+    Do not use generic templates. Address specific topics or complaints exactly as mentioned in the chat.
     
-    # Improved complaints: only from bad messages, filter channel name + filler
-    bad_messages = [m['message'].lower() for m in messages if m['sentiment'] == 'bad']
-    if len(bad_messages) >= 5:
-        complaint_keywords = Counter()
-        url_pat = r'https?://\S+|www\.\S+'
-        filler = {'this','that','what','when','where','why','how','they','there',
-                  'just','like','dont','even','still','think','really','know',
-                  'want','need','have','make','been','going','about','would',
-                  'could','should','every','much','thing','stuff','your','with'}
-        for msg in bad_messages:
-            cleaned = re.sub(url_pat, '', msg)
-            words = re.findall(r'\b[a-z]{4,}\b', cleaned)
-            words = [w for w in words if w not in filler and w not in exclude and w not in STOP_WORDS]
-            complaint_keywords.update(words)
-        common_complaints = [(w, c) for w, c in complaint_keywords.most_common(8) if c >= 2]
-        if common_complaints:
-            complaint_terms = ", ".join([w for w, c in common_complaints[:3]])
-            suggestions.append(f"Common Complaints: Viewers mention '{complaint_terms}'. Address these directly.")
+    Output MUST be a valid JSON array of two strings ONLY. No markdown formatted blocks.
+    Example output:
+    ["Address the complaints about audio echoing immediately.", "Acknowledge viewers joining from the recent raid!"]
     
-    keywords = extract_keywords(messages, top_n=10, exclude_words=exclude)
-    if keywords:
-        suggestions.append(f"Trending Topic: '{keywords[0][0]}' is being discussed heavily.")
-    if not suggestions:
-        suggestions.append("Chat analysis: Sentiment appears balanced. Keep engaging naturally.")
-    return {"suggestions": suggestions[:5], "note": f"Analysis based on {total} messages"}
+    Chat Log:
+    {chat_log}
+    """
+    
+    try:
+        response = gemini_model.generate_content(prompt)
+        text_resp = response.text.strip()
+        if text_resp.startswith("```"):
+            text_resp = re.sub(r"```json\n|```\n|```", "", text_resp).strip()
+            
+        suggestions = json.loads(text_resp)
+        if not isinstance(suggestions, list) or len(suggestions) == 0:
+            raise ValueError("Not a valid list")
+            
+        final_suggestions = [s for s in suggestions[:2]]
+        
+        ai_suggestion_cache[channel] = {
+            "timestamp": current_time,
+            "suggestions": final_suggestions
+        }
+        return {"suggestions": final_suggestions, "note": f"Analysis based on {total} messages"}
+        
+    except Exception as e:
+        print(f"Gemini suggestion generation failed: {e}")
+        fallback = []
+        bad_pct = (counts.get('bad', 0) / max(total, 1)) * 100
+        if bad_pct > 30:
+            fallback.append("Action Required: High negative sentiment detected in chat.")
+        else:
+            fallback.append("Optimization: Keep engaging with chat as sentiment is stable.")
+            
+        if cache_entry:
+            return {"suggestions": cache_entry['suggestions'], "note": "Using cached analysis (API error)"}
+        return {"suggestions": fallback, "note": "Fallback active"}
 
 def calculate_stream_score(counts, messages):
     """Calculate stream health score 0-100."""
@@ -1562,11 +1607,31 @@ def twitch_analytics(channel):
     keywords = extract_keywords(messages, top_n=10, exclude_words=exclude)
     score = calculate_stream_score(counts, messages)
     patterns = analyse_sentiment_patterns(messages)
+    archetype = calculate_community_archetype(messages, patterns)
+    
+    # Generate an algorithmic AI insight based on patterns
+    def build_insight(arch, pat):
+        if len(messages) < 10: return "Collecting more messages to formulate deep insights..."
+        intensity = pat.get('intensity', 'moderate')
+        velocity = pat.get('velocity', 'stable')
+        engage = pat.get('engagement_pattern', 'regular')
+        
+        ins = f"The community is operating with {intensity} emotional intensity and the overall vibe is {velocity}. "
+        if arch['name'] == "The Hype Squad": ins += "It's an incredibly positive hype train right now."
+        elif arch['name'] == "The Pitchforks": ins += "Negative feedback is spiking. Addressing chat directly could diffuse tension."
+        elif arch['name'] == "Opinionated Critics": ins += "The audience is highly engaged but skeptical. They are looking for high-level gameplay or explanations."
+        else: ins += "Viewers are casually engaged."
+        ins += f" Participation is {engage}."
+        return ins
+        
+    ai_insight = build_insight(archetype, patterns)
     
     return jsonify({
         "counts": counts,
         "percentages": percentages,
         "mood": mood,
+        "archetype": archetype,
+        "ai_insight": ai_insight,
         "keywords": keywords,
         "stream_score": score,
         "total_messages": total,
@@ -1715,11 +1780,31 @@ def kick_analytics(channel):
     keywords = extract_keywords(messages, top_n=10, exclude_words=exclude)
     score = calculate_stream_score(counts, messages)
     patterns = analyse_sentiment_patterns(messages)
+    archetype = calculate_community_archetype(messages, patterns)
+    
+    # Generate an algorithmic AI insight based on patterns
+    def build_insight(arch, pat):
+        if len(messages) < 10: return "Collecting more messages to formulate deep insights..."
+        intensity = pat.get('intensity', 'moderate')
+        velocity = pat.get('velocity', 'stable')
+        engage = pat.get('engagement_pattern', 'regular')
+        
+        ins = f"The community is operating with {intensity} emotional intensity and the overall vibe is {velocity}. "
+        if arch['name'] == "The Hype Squad": ins += "It's an incredibly positive hype train right now."
+        elif arch['name'] == "The Pitchforks": ins += "Negative feedback is spiking. Addressing chat directly could diffuse tension."
+        elif arch['name'] == "Opinionated Critics": ins += "The audience is highly engaged but skeptical. They are looking for high-level gameplay or explanations."
+        else: ins += "Viewers are casually engaged."
+        ins += f" Participation is {engage}."
+        return ins
+        
+    ai_insight = build_insight(archetype, patterns)
     
     return jsonify({
         "counts": counts,
         "percentages": percentages,
         "mood": mood,
+        "archetype": archetype,
+        "ai_insight": ai_insight,
         "keywords": keywords,
         "stream_score": score,
         "total_messages": total,

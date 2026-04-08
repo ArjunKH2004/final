@@ -688,7 +688,76 @@ function AnalyzeContent() {
                             </div>
                         </div>
 
-                        {/* Stream Insights */}
+                        {/* 1. Streamer Profile & Characterization Banner */}
+                        {isLiveMode && liveAnalytics && (
+                            <div className="bg-gradient-to-r from-[#1a1a1a] to-[#2a2a2a] rounded-xl p-6 flex flex-col md:flex-row gap-6 items-center border border-gray-800 shadow-xl overflow-hidden relative">
+                                {/* Decorative bg element */}
+                                <div className="absolute right-0 top-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+                                
+                                {/* Streamer Avatar & Info */}
+                                <div className="flex items-center gap-5 z-10 w-full md:w-1/2 border-b md:border-b-0 md:border-r border-gray-700/50 pb-4 md:pb-0 md:pr-4">
+                                    <div className="relative">
+                                        <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-purple-500 shadow-lg shadow-purple-500/20 bg-[#2a2a2a] flex items-center justify-center">
+                                            {isTwitchMode ? (
+                                                /* eslint-disable-next-line @next/next/no-img-element */
+                                                <img src={`https://decapi.me/twitch/avatar/${twitchChannel}`} alt="Streamer Avatar" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-2xl font-bold uppercase text-white">{kickChannel?.substring(0,2) || "LIVE"}</span>
+                                            )}
+                                        </div>
+                                        <div className="absolute -bottom-2 -right-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md border border-black shadow">LIVE</div>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <div className="text-gray-400 text-xs font-semibold tracking-wider uppercase mb-1">
+                                            {isTwitchMode ? "Twitch Streamer" : isKickMode ? "Kick Streamer" : selectedPlatform === "youtube" ? "YouTube Streamer" : "Streamer"}
+                                        </div>
+                                        <h2 className="text-white text-2xl font-black capitalize tracking-tight leading-none mb-2">
+                                            {isTwitchMode ? twitchChannel : isKickMode ? kickChannel : selectedPlatform === "youtube" ? "YouTube Live" : "Stream"}
+                                        </h2>
+                                        <div className="flex items-center gap-4 text-xs font-medium text-gray-300">
+                                            <span className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-md">
+                                                <Users className="w-3.5 h-3.5 text-purple-400" />
+                                                {liveAnalytics?.total_messages || 0} Msgs
+                                            </span>
+                                            <span className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-md">
+                                                <Zap className="w-3.5 h-3.5 text-yellow-400" />
+                                                Health: {liveAnalytics?.stream_score || 50}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* Community Archetype Badge */}
+                                <div className="z-10 w-full md:w-1/2 flex items-center justify-center md:justify-start md:pl-4">
+                                    {liveAnalytics?.archetype ? (
+                                        <div className="flex items-center gap-4 bg-black/30 w-full p-4 rounded-xl border border-white/5">
+                                            <div className="text-4xl filter drop-shadow-md">
+                                                {liveAnalytics.archetype.icon}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Community Archetype Profile</span>
+                                                <span className={`text-xl font-bold ${liveAnalytics.archetype.class || "text-white"}`}>
+                                                    {liveAnalytics.archetype.name}
+                                                </span>
+                                                <span className="text-gray-300 text-sm mt-1 leading-snug">
+                                                    {liveAnalytics.archetype.desc}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="animate-pulse flex items-center gap-4 bg-black/30 w-full p-4 rounded-xl border border-white/5">
+                                            <div className="w-12 h-12 bg-gray-700 rounded-full"></div>
+                                            <div className="flex flex-col gap-2 w-full">
+                                                <div className="h-3 w-1/3 bg-gray-700 rounded"></div>
+                                                <div className="h-4 w-1/2 bg-gray-700 rounded"></div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Stream Insights Quick Stats */}
                         <div className="bg-[#1a1a1a] rounded-xl p-6">
                             <div className="flex items-center gap-2 mb-6">
                                 <TrendingUp className="w-5 h-5 text-purple-400" />
@@ -704,12 +773,12 @@ function AnalyzeContent() {
                                         </div>
                                         <p className="text-gray-500 text-xs">Messages</p>
                                     </div>
-                                    <div className="text-center">
+                                    <div className="text-center cursor-pointer hover:bg-white/5 transition-colors p-2 rounded-lg -m-2" onClick={() => setModalData({ title: "Stream Score (Health)", value: "A composite metric from 0-100 evaluating stream vitality, chat positive sentiment ratio, and message frequency. A higher score indicates a highly active and positive stream environment." })}>
                                         <div className="flex items-center justify-center gap-2 mb-2">
                                             <Zap className="w-5 h-5 text-yellow-400" />
                                             <span className="text-white text-2xl font-bold">{liveAnalytics?.stream_score || 50}</span>
                                         </div>
-                                        <p className="text-gray-500 text-xs">Score</p>
+                                        <p className="text-gray-500 text-xs">Score ⓘ</p>
                                     </div>
                                     <div className="text-center cursor-pointer hover:bg-white/5 transition-colors p-2 rounded-lg" onClick={() => setModalData({ title: "Current Mood", value: liveAnalytics?.mood || "Analyzing..." })}>
                                         <div className="flex items-center justify-center gap-2 mb-2">
@@ -781,86 +850,107 @@ function AnalyzeContent() {
                             )}
                         </div>
 
-                        {/* Audience Sentiment Analysis */}
+                        {/* Audience Sentiment and AI Insight */}
                         {analysis && (
-                            <div className="bg-[#1a1a1a] rounded-xl p-6">
-                                <div className="flex items-center gap-2 mb-6">
-                                    <div className="w-6 h-6 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center">
-                                        <Smile className="w-4 h-4 text-white" />
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+                                {/* Raw Summary & Sentiment Classification */}
+                                <div className="bg-[#1a1a1a] rounded-xl p-6 flex flex-col h-full border border-gray-800/60">
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <div className="w-6 h-6 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center">
+                                            <BarChart3 className="w-3.5 h-3.5 text-white" />
+                                        </div>
+                                        <h3 className="text-white text-lg font-bold">Data & Sentiment Breakdown</h3>
                                     </div>
-                                    <h3 className="text-white text-lg font-bold">Audience Sentiment Analysis</h3>
+                                    
+                                    <div className="space-y-6 flex-1 flex flex-col justify-center">
+                                         {/* Sentiment Bar */}
+                                         <div>
+                                            <div className="flex justify-between text-xs text-gray-400 font-semibold mb-2 px-1">
+                                                <span className="text-green-400">Positive {getSentimentPercent("good")}%</span>
+                                                <span className="text-blue-400">Neutral {getSentimentPercent("neutral")}%</span>
+                                                <span className="text-red-400">Negative {getSentimentPercent("bad")}%</span>
+                                            </div>
+                                            <div className="flex h-4 rounded-full overflow-hidden mb-5">
+                                                <div className="bg-green-500" style={{ width: `${getSentimentPercent("good")}%` }}></div>
+                                                <div className="bg-blue-500" style={{ width: `${getSentimentPercent("neutral")}%` }}></div>
+                                                <div className="bg-red-500" style={{ width: `${getSentimentPercent("bad")}%` }}></div>
+                                            </div>
+                                         </div>
+                                         
+                                         <div className="bg-black/30 rounded-xl p-5 text-sm text-gray-300 font-medium leading-relaxed border border-gray-800 shadow-inner">
+                                             <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-800">
+                                                <span className="text-blue-400 font-bold uppercase tracking-widest text-[10px]">Statistical Summary</span>
+                                             </div>
+                                             {analysis.summary || "Gathering enough messages to provide a statistical summary..."}
+                                         </div>
+                                    </div>
                                 </div>
-
-                                <div className="flex flex-col lg:flex-row gap-8">
-                                    {/* Current Stream Sentiment */}
-                                    <div className="lg:w-1/3">
-                                        <p className="text-gray-400 text-sm mb-4">Sentiment Breakdown</p>
-                                        <div className="space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <Smile className="w-5 h-5 text-green-400" />
-                                                    <span className="text-white">Positive</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-green-400 font-bold">{getSentimentPercent("good")}%</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <Meh className="w-5 h-5 text-blue-400" />
-                                                    <span className="text-white">Neutral</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-blue-400 font-bold">{getSentimentPercent("neutral")}%</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <Frown className="w-5 h-5 text-red-400" />
-                                                    <span className="text-white">Negative</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-red-400 font-bold">{getSentimentPercent("bad")}%</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Sentiment Distribution */}
-                                    <div className="lg:flex-1">
-                                        <p className="text-gray-400 text-sm mb-4">Sentiment Distribution</p>
-                                        {/* Sentiment Bar */}
-                                        <div className="flex h-8 rounded-lg overflow-hidden mb-4">
-                                            <div className="bg-gradient-to-r from-green-500 to-green-400" style={{ width: `${getSentimentPercent("good")}%` }}></div>
-                                            <div className="bg-gradient-to-r from-red-400 to-red-500" style={{ width: `${getSentimentPercent("bad")}%` }}></div>
-                                            <div className="bg-gradient-to-r from-cyan-400 to-cyan-500" style={{ width: `${getSentimentPercent("neutral")}%` }}></div>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-gray-400 text-sm">
-                                                <span className="text-white font-semibold">Summary:</span> {analysis.summary || "No summary available"}
-                                            </p>
-                                        </div>
-                                    </div>
+                                
+                                {/* Deep AI Insight Generation */}
+                                <div className="bg-gradient-to-br from-[#1e1a2f] to-[#121626] rounded-xl p-6 flex flex-col h-full border border-indigo-900/40 relative overflow-hidden shadow-lg shadow-indigo-900/10">
+                                     <div className="absolute top-0 right-0 p-4 opacity-[0.03]">
+                                        <Lightbulb className="w-48 h-48" />
+                                     </div>
+                                     <div className="flex items-center gap-2 mb-6 z-10">
+                                         <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                                             <Zap className="w-3.5 h-3.5 text-white" />
+                                         </div>
+                                         <h3 className="text-white text-lg font-bold">Deep AI Stream Insight</h3>
+                                     </div>
+                                     
+                                     <div className="flex-1 flex items-center justify-center z-10">
+                                        <p className="text-indigo-100 text-base md:text-lg font-medium leading-relaxed drop-shadow-sm text-center px-4 italic">
+                                            &ldquo;{liveAnalytics?.ai_insight || "Reading chat velocity and patterns to generate community insight..."}&rdquo;
+                                        </p>
+                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* Live Stream Suggestions (Twitch, Kick, or YouTube) */}
+                        {/* Actionable Insights to Improve Stream (Twitch, Kick, or YouTube) */}
                         {((isLiveMode && liveSuggestions) || (selectedPlatform === "youtube" && ytSuggestions)) && (
-                            <div className="bg-[#1a1a1a] rounded-xl p-6">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <Lightbulb className="w-5 h-5 text-yellow-400" />
-                                    <h3 className="text-white text-lg font-bold">AI Insights & Suggestions</h3>
+                            <div className="bg-[#1a1a1a] rounded-xl p-6 border border-yellow-900/10 shadow-lg mt-6">
+                                <div className="flex items-center gap-3 mb-6 border-b border-gray-800 pb-4">
+                                    <div className="bg-yellow-500/20 p-2 rounded-lg">
+                                        <Lightbulb className="w-6 h-6 text-yellow-400" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-white text-xl font-bold tracking-tight">Streamer Action Plan</h3>
+                                        <p className="text-gray-400 text-sm mt-0.5">Live recommendations to optimize engagement</p>
+                                    </div>
                                 </div>
-                                <div className="space-y-3">
-                                    {(liveSuggestions?.suggestions || ytSuggestions?.suggestions || []).map((s: string, i: number) => (
-                                        <div key={i} className="bg-[#222] rounded-lg p-4">
-                                            <p className="text-gray-300 text-sm">{s}</p>
-                                        </div>
-                                    ))}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {(liveSuggestions?.suggestions || ytSuggestions?.suggestions || []).map((s: string, i: number) => {
+                                        let icon = <Check className="w-5 h-5 text-green-400" />;
+                                        let borderClass = "border-l-[3px] border-green-500 bg-gradient-to-r from-green-500/10 to-[#222]";
+                                        let title = "Optimization";
+                                        
+                                        if (s.toLowerCase().includes("negativ") || s.toLowerCase().includes("alert") || s.toLowerCase().includes("address")) {
+                                            icon = <Zap className="w-5 h-5 text-red-500" />;
+                                            borderClass = "border-l-[3px] border-red-500 bg-gradient-to-r from-red-500/10 to-[#222]";
+                                            title = "Action Required";
+                                        } else if (s.toLowerCase().includes("moderate") || s.toLowerCase().includes("complaint") || s.toLowerCase().includes("warn")) {
+                                            icon = <Lightbulb className="w-5 h-5 text-yellow-500" />;
+                                            borderClass = "border-l-[3px] border-yellow-500 bg-gradient-to-r from-yellow-500/10 to-[#222]";
+                                            title = "Recommendation";
+                                        }
+
+                                        return (
+                                            <div key={i} className={`rounded-r-xl p-5 flex gap-4 items-start ${borderClass} hover:brightness-110 transition-all`}>
+                                                <div className="mt-0.5 p-2 bg-black/40 rounded-xl shadow-inner border border-white/5">{icon}</div>
+                                                <div className="flex-1">
+                                                    <h4 className="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-1.5">{title}</h4>
+                                                    <p className="text-gray-200 text-sm font-medium leading-relaxed">{s}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                                 {(liveSuggestions?.note || ytSuggestions?.note) && (
-                                    <p className="text-gray-500 text-xs mt-3">{liveSuggestions?.note || ytSuggestions?.note}</p>
+                                    <div className="mt-6 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-gray-500 bg-black/20 p-3 rounded-lg border border-gray-800">
+                                        <span>Status</span>
+                                        <span>{liveSuggestions?.note || ytSuggestions?.note}</span>
+                                    </div>
                                 )}
                             </div>
                         )}
