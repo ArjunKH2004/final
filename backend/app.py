@@ -987,24 +987,33 @@ class KickChatClient:
         self._manual_chatroom_id = None
 
     def connect(self):
+        from concurrent.futures import ThreadPoolExecutor, as_completed
         print(f"🔌 [KickChatClient] Resolving #{self.channel}...")
         strategies = [
             ("tls-client", self._try_tls_client),
             ("httpx HTTP/2", self._try_httpx),
             ("cloudscraper", self._try_cloudscraper),
             ("CORS proxy", self._try_cors_proxy),
-            ("Selenium", self._try_selenium),
-            ("manual fallback", self._try_manual_fallback),
         ]
         
-        for name, fn in strategies:
-            try:
-                self._chatroom_id = fn()
-                if self._chatroom_id:
-                    print(f"  ✅ chatroom_id={self._chatroom_id} via {name}")
-                    break
-            except Exception as e:
-                print(f"  ✗ {name}: {e}")
+        # Run strategies concurrently — first one to return wins
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            future_to_name = {executor.submit(fn): name for name, fn in strategies}
+            for future in as_completed(future_to_name, timeout=8):
+                name = future_to_name[future]
+                try:
+                    result = future.result()
+                    if result:
+                        self._chatroom_id = result
+                        print(f"  ✅ chatroom_id={result} via {name}")
+                        break
+                except Exception as e:
+                    print(f"  ✗ {name}: {e}")
+        
+        # Fallback to manual if concurrent didn't work
+        if not self._chatroom_id and self._manual_chatroom_id:
+            self._chatroom_id = self._manual_chatroom_id
+            print(f"  ✅ chatroom_id={self._chatroom_id} via manual fallback")
                 
         if not self._chatroom_id:
             raise ConnectionError(f"Could not resolve Kick chat ID for {self.channel}")
@@ -1016,7 +1025,7 @@ class KickChatClient:
             "Accept": "application/json",
             "Referer": "https://kick.com/",
         }
-        r = (session or requests).get(url, headers=headers, timeout=10)
+        r = (session or requests).get(url, headers=headers, timeout=5)
         return r.json() if r.status_code == 200 else None
 
     def _extract_cid(self, data):
@@ -1053,7 +1062,7 @@ class KickChatClient:
         encoded = urllib.parse.quote(target)
         for proxy in self.CORS_PROXIES:
             try:
-                r = requests.get(f"{proxy}{encoded}", timeout=10)
+                r = requests.get(f"{proxy}{encoded}", timeout=5)
                 if r.status_code == 200:
                     return self._extract_cid(r.json())
             except: pass
