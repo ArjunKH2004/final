@@ -320,19 +320,19 @@ def summarize(counts):
     return "The room is mixed. Different opinions are being shared with no clear dominant sentiment."
 
 
-# ===== API KEYS =====
+# ===== API KEYS (set via environment variables) =====
 # YouTube Data API v3
-YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "AIzaSyB-kZZzAsasrRK3OVOmg0id8cDiAx_wItE")
+YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "")
 
 # Gemini API Key (free from https://ai.google.dev)
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyDHQnizSt0rJgHYRRa6Pe4PybUZpDK62ec")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 genai.configure(api_key=GEMINI_API_KEY)
 
 # Twitch API
-TWITCH_SECRET = os.environ.get("TWITCH_SECRET", "t6ufp4pnzzkisxz5oim5vontvzz40n")
+TWITCH_SECRET = os.environ.get("TWITCH_SECRET", "")
 
 # Kick API
-KICK_CLIENT_ID = os.environ.get("KICK_CLIENT_ID", "01KKHHF5BP1WD1N566KH7P5BCS")
+KICK_CLIENT_ID = os.environ.get("KICK_CLIENT_ID", "")
 
 
 # ===== PLATFORM HELPERS =====
